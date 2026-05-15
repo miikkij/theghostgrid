@@ -262,7 +262,7 @@ function testDecoyBurstCycle() {
   decoySimulator.reset();
   decoySimulator.init(state);
 
-  const ids = decoySimulator.spawnDecoys(47, { x: [0, 1], y: [0, 1] });
+  decoySimulator.spawnDecoys(47, { x: [0, 1], y: [0, 1] });
 
   wavePatterns.activate({
     patternName: 'linear_translation',

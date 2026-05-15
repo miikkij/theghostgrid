@@ -2,7 +2,6 @@
 
 const decoySimulator = require('./decoy_simulator');
 const wavePatterns = require('./wave_patterns');
-const fakeData = require('./fake_data');
 const honeypot = require('./honeypot');
 
 function init(state) {

@@ -5,17 +5,26 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "dev": "node --watch server/index.js",
+    "lint": "eslint server/",
+    "test": "node server/protocol/test_protocol.js && node server/deception/test_deception.js",
+    "test:protocol": "node server/protocol/test_protocol.js",
+    "test:deception": "node server/deception/test_deception.js"
   },
   "dependencies": {
-    "express": "^4.21.0",
-    "socket.io": "^4.8.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.0",
+    "express": "^4.21.0",
     "pino": "^9.5.0",
     "pino-pretty": "^11.3.0",
-    "cors": "^2.8.5"
+    "socket.io": "^4.8.0"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0"
   }
 }

@@ -97,9 +97,8 @@ function getNeighbors(nodeId) {
   }));
 }
 
-function routePacket({ src, dst, payload, mode, ttl }) {
+function routePacket({ src, dst, payload: _payload, mode, ttl: _ttl }) {
   mode = mode || 'routine';
-  ttl = ttl ?? _config.DEFAULT_TTL;
 
   if (mode === 'urgent') {
     return floodRoute(src, dst);

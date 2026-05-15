@@ -4,13 +4,12 @@ const crypto = require('node:crypto');
 const cryptoUtils = require('../protocol/crypto');
 const frame = require('../protocol/frame');
 
-let _state = null;
 let _strategy = 'encrypted_noise';
 
 const PAYLOAD_SIZE = frame.MAX_MESH_PAYLOAD;
 
-function init(state) {
-  _state = state;
+function init(_state) {
+  // Reserved for future strategy-specific state subscriptions
 }
 
 function generatePayload(nodeId, cycleNumber, strategy) {
