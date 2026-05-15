@@ -125,3 +125,35 @@ Audit entries are appended to both an in-memory array (for fast queries) and a `
 ### ConfidentialMind client uses 3-second timeout, Ollama uses 15-second
 
 ConfidentialMind is expected to be a hosted service with low latency; 3 seconds aligns with the tactical loop's latency budget. Ollama runs locally and may need more time on CPU, so it gets 15 seconds. Both use AbortController for clean cancellation.
+
+---
+
+## 2026-05-16 — Big Screen Visualization
+
+### Grid cached on offscreen canvas, redrawn only on resize
+
+Drawing a full-screen grid (50px spacing) every frame at 60 FPS is wasteful — the grid is static. An offscreen `<canvas>` caches the grid and is drawn via `drawImage()` each frame (~0.1ms vs ~1.5ms for raw line drawing). The cache is invalidated when the viewport dimensions change.
+
+### Two separate requestAnimationFrame loops for canvas and DOM
+
+Canvas rendering runs at full 60 FPS via one rAF loop. DOM overlay updates (UTC clock, telemetry values, cycle progress) run on a second rAF loop throttled to 250ms intervals. This avoids DOM layout thrashing in the hot render path. The 250ms interval is fast enough for human perception of updating numbers while staying off the frame budget.
+
+### Script tags instead of ES modules for browser scripts
+
+The spec suggests `type="module"` but the server serves `connection.js` as a plain script at `/static/shared/connection.js`. Socket.IO's client is also loaded via `<script src="/socket.io/socket.io.js">`. Using standard script tags with `'use strict'` keeps loading order explicit and avoids CORS issues when files are served from different paths. The `BattlefieldRenderer` class is exposed on the global scope and consumed by `script.js` — acceptable for a 4-file application.
+
+### Mock mode inline in script.js, not a separate file
+
+The spec suggests `mock-state.js` as a separate file. Mock mode is integrated into `script.js` behind a `?mock=true` URL parameter check because: (1) it shares the same state object and helper functions, (2) it avoids an extra HTTP request, (3) the mock code is ~100 lines and doesn't warrant a separate load path. The mock simulator runs setInterval-based cycles that exercise every rendering path including sync pulses, transmission arcs, jamming zones, honeypot alerts, and AI decisions.
+
+### Cursor auto-hide after 5 seconds
+
+Operator displays don't need a visible cursor. CSS defaults to `cursor: none`; a `mousemove` listener adds `cursor-visible` class with a 5-second timeout. This makes the display look clean for photography while still being usable when the operator needs the mouse.
+
+### Design system CSS variable names differ slightly from spec
+
+The spec uses `--bg-deep` while the original stub used `--bg-base`. The design system was updated to match the spec naming (`--bg-deep`, `--accent-green`, `--accent-cyan`, etc.) since those are the canonical names from `10-ui-design.md`. Other UI components importing the shared CSS will use these names.
+
+### Jamming zones support both polygon and circle definitions
+
+The spec shows polygon zones. The renderer also supports `{ center, radius }` circle zones because the server state uses `{ center, radius, since }` format (per `06-build-components.md`). Both are handled transparently — the renderer checks for `polygon` first, falls back to `center`/`radius`.

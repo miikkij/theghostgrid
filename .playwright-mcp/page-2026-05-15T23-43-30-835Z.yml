@@ -1,0 +1,40 @@
+- generic [ref=e2]:
+  - generic:
+    - generic: 23:43:30 UTC
+    - generic: CYCLE 0596
+    - generic: IDLE
+  - generic:
+    - generic:
+      - generic: PACKETS
+      - generic: "0"
+    - generic:
+      - generic: DRIFT
+      - generic: 0ms
+    - generic:
+      - generic: NODES
+      - generic: "0"
+    - generic:
+      - generic: DECOYS
+      - generic: "0"
+    - generic:
+      - generic: AI
+      - generic: STANDBY
+  - generic:
+    - generic:
+      - generic: ◆
+      - generic: AI REASONING
+      - generic: 23:43:18
+    - generic:
+      - generic: ARTILLERY BATTERY DETECTED
+      - generic: Acoustic signature from HP-20 correlated with seismic data from HP-22. Pattern consistent with 152mm howitzer battery, estimated 3-4 tubes. Direction of arrival 287° from mesh centroid, range estimated 4-6km.
+      - generic: "Confidence: 87%"
+  - button "▶ SIMULATION" [active] [ref=e10] [cursor=pointer]:
+    - generic [ref=e11]: ▶
+    - text: SIMULATION
+  - generic: SIMULATION ACTIVE
+  - generic: 60 FPS
+  - generic:
+    - generic:
+      - generic: ⚠
+      - generic: DISCONNECTED
+      - generic: Attempting to reconnect…
