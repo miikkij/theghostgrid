@@ -65,3 +65,31 @@ Each DV announcement cycle rebuilds every node's routing table in a single synch
 ### Cover-fill frames use random padding, not zeroes
 
 Padding bytes in `padPayload` are filled with `crypto.randomBytes` rather than zeroes. After encryption with ChaCha20-Poly1305, both would be indistinguishable to an observer, but random padding also prevents plaintext pattern analysis if the key is later compromised.
+
+---
+
+## 2026-05-16 — Deception Engine
+
+### Decoy frames use JSON path, not binary encoding, for simulated emission
+
+Decoy frames are composed as JSON objects with HMAC MACs (matching `transmission.composeFrame` format) and emitted via `radio.frame_received_simulated`. The transmission module parses them identically to real frames. Binary encoding via `encodeTransmissionFrame` is available for visualization but not used in the simulation path — the JSON path is what the protocol stack actually processes. Binary equivalence is verified in tests (256-byte frames, identical format).
+
+### Mulberry32 PRNG for deterministic wave pattern evaluation
+
+The `random_walk_cluster` pattern needs reproducible pseudo-random walks from a seed. Node.js `Math.random()` is not seedable. Rather than adding a dependency, a 32-bit Mulberry32 generator is used inline — it's 6 lines, has good statistical properties for this use case, and produces identical trajectories given the same seed across runs.
+
+### Cycle key cached per cycle in decoy simulator
+
+With 47+ decoys per cycle, `deriveCycleKey` (HKDF) would be called 47 times per cycle producing identical results. The decoy simulator caches the cycle key and only re-derives when the cycle number changes. Measured performance: 0.4ms average per cycle for 50 decoys (well under the 50ms target).
+
+### Phantom convoy proximity uses point-to-segment distance, not nearest-waypoint
+
+The spec says activation is based on "proximity to path." Using point-to-nearest-waypoint would create activation hotspots at waypoints and gaps along edges. Point-to-segment distance (with parametric projection clamping) produces smooth activation along the entire path. The active zone width is hardcoded at 0.03 normalized units — wide enough to catch nodes near the path, narrow enough to look like a road corridor.
+
+### Honeypot sensor classification table is static, not learned
+
+Each (sensor_type, event_type) pair maps to a fixed classification string (e.g., acoustic+artillery → "artillery_overpressure"). In production, this would be a trained classifier. For the hackathon, the static table provides correct-looking reports for the demo scenarios without ML complexity.
+
+### Encrypted noise strategy encrypts random bytes with AEAD, not just random bytes
+
+The `encrypted_noise` fake data strategy doesn't just generate random bytes — it generates random plaintext and encrypts it with ChaCha20-Poly1305 using the cycle key. This means the payload structure (nonce + ciphertext + auth tag) is identical to a real encrypted payload, not just random noise. If an adversary could distinguish AEAD ciphertext from raw random bytes (they can't, but defense in depth), this approach still holds.
