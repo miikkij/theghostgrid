@@ -7,9 +7,11 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "lint": "eslint server/",
-    "test": "node server/protocol/test_protocol.js && node server/deception/test_deception.js",
+    "test": "node server/protocol/test_protocol.js && node server/deception/test_deception.js && node server/hq_brain/test_hq_brain.js",
     "test:protocol": "node server/protocol/test_protocol.js",
-    "test:deception": "node server/deception/test_deception.js"
+    "test:deception": "node server/deception/test_deception.js",
+    "test:hq-brain": "node server/hq_brain/test_hq_brain.js",
+    "test:hq-brain-live": "node server/hq_brain/test_hq_brain_live.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

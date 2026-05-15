@@ -93,3 +93,35 @@ Each (sensor_type, event_type) pair maps to a fixed classification string (e.g.,
 ### Encrypted noise strategy encrypts random bytes with AEAD, not just random bytes
 
 The `encrypted_noise` fake data strategy doesn't just generate random bytes — it generates random plaintext and encrypts it with ChaCha20-Poly1305 using the cycle key. This means the payload structure (nonce + ciphertext + auth tag) is identical to a real encrypted payload, not just random noise. If an adversary could distinguish AEAD ciphertext from raw random bytes (they can't, but defense in depth), this approach still holds.
+
+---
+
+## 2026-05-16 — HQ Brain
+
+### Built-in fetch used instead of axios/node-fetch
+
+Node 20+ ships with global `fetch`. Both ConfidentialMind client and Ollama fallback use it directly, avoiding an additional dependency. The ConfidentialMind API follows the OpenAI-compatible `/v1/chat/completions` format; Ollama uses its native `/api/chat` endpoint.
+
+### Tactical loop processes events serially with a bounded queue
+
+The tactical loop queues incoming events and processes them one at a time (one LLM call at a time). If the queue exceeds 5 events, the oldest LOW-urgency event is dropped first; if none are LOW, the oldest event is dropped. This prevents cascading LLM calls during event storms while preserving high-urgency events.
+
+### LLM response normalization as a safety layer
+
+All LLM responses pass through `normalizeResponse()` before being acted on. Invalid urgency values default to LOW, missing fields get safe defaults, and confidence is clamped to [0,1]. This prevents malformed LLM output from triggering spurious broadcasts.
+
+### Degraded mode returns LOW urgency for all events
+
+When neither ConfidentialMind nor Ollama is available, the system enters degraded mode where every event is classified as LOW urgency with zero confidence. This ensures events are still logged for manual review without false-positive broadcasts.
+
+### Operational loop is manual-trigger only (hackathon scope)
+
+The operational loop subscribes to `ops.trigger_ai_adaptation` rather than running on a timer. This matches the hackathon demo flow where the operator explicitly triggers AI adaptation. Production would add a periodic timer.
+
+### Audit log is dual-write: in-memory array + JSON-lines file
+
+Audit entries are appended to both an in-memory array (for fast queries) and a `logs/audit.log` file (for persistence). The file uses JSON-lines format (one JSON object per line) for easy parsing. If the file can't be opened, the system continues with in-memory only.
+
+### ConfidentialMind client uses 3-second timeout, Ollama uses 15-second
+
+ConfidentialMind is expected to be a hosted service with low latency; 3 seconds aligns with the tactical loop's latency budget. Ollama runs locally and may need more time on CPU, so it gets 15 seconds. Both use AbortController for clean cancellation.
