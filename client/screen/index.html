@@ -3,117 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tactical Mesh — Big Screen</title>
+  <title>Tactical Mesh — Operator Display</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/shared/design-system.css">
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
-    }
-    .header {
-      position: fixed;
-      top: 1rem;
-      left: 1.5rem;
-      font-family: var(--font-mono);
-    }
-    .header .title {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-    #cycle-display {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--cyan);
-    }
-    #phase-display {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    .telemetry {
-      position: fixed;
-      top: 1rem;
-      right: 1.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      text-align: right;
-      line-height: 1.8;
-    }
-    .telemetry .value {
-      color: var(--text-primary);
-    }
-    .center-msg {
-      font-family: var(--font-mono);
-      font-size: 1rem;
-      color: var(--text-muted);
-    }
-    .pulse {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--cyan);
-      display: inline-block;
-      animation: pulse 1s infinite;
-      margin-right: 0.5rem;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    #conn-status {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--gray);
-    }
-  </style>
+  <link rel="stylesheet" href="/static/screen/style.css">
 </head>
 <body>
-  <div class="header">
-    <div class="title">Tactical Mesh &mdash; Operator Screen</div>
-    <div id="cycle-display">Cycle 0</div>
-    <div id="phase-display">IDLE</div>
-  </div>
+  <div id="app">
+    <canvas id="battlefield"></canvas>
 
-  <div class="telemetry">
-    <div>Packets <span class="value" id="tel-packets">0</span></div>
-    <div>Drift <span class="value" id="tel-drift">0ms</span></div>
-    <div>Nodes <span class="value" id="tel-nodes">0</span></div>
-    <div>AI <span class="value" id="tel-ai">STANDBY</span></div>
-  </div>
+    <!-- Cycle / Timer — top-left -->
+    <div id="cycle-indicator" class="overlay-panel top-left">
+      <div class="utc-time mono" data-utc>--:--:-- UTC</div>
+      <div class="cycle-number mono">CYCLE <span class="cycle-val" data-cycle>0000</span></div>
+      <div class="cycle-phase mono" data-phase>IDLE</div>
+      <div class="cycle-progress"><div class="bar" data-progress-bar></div></div>
+    </div>
 
-  <div class="center-msg">
-    <span class="pulse"></span>
-    Big Screen visualization &mdash; Canvas renderer will be built by Component F
-  </div>
+    <!-- Telemetry — top-right -->
+    <div id="telemetry" class="overlay-panel top-right">
+      <div class="tel-row"><span class="label">PACKETS</span><span class="value mono" data-packets>0</span></div>
+      <div class="tel-row"><span class="label">DRIFT</span><span class="value mono" data-drift>0ms</span></div>
+      <div class="tel-row"><span class="label">NODES</span><span class="value mono" data-nodes>0</span></div>
+      <div class="tel-row"><span class="label">DECOYS</span><span class="value mono" data-decoys>0</span></div>
+      <div class="tel-row"><span class="label">AI</span><span class="value mono" data-ai-status>STANDBY</span></div>
+    </div>
 
-  <div id="conn-status"></div>
+    <!-- AI Reasoning — bottom-left, slides in -->
+    <div id="ai-reasoning" class="overlay-panel bottom-left hidden">
+      <div class="ai-header">
+        <span class="ai-icon">&#9670;</span>
+        <span class="ai-title">AI REASONING</span>
+        <span class="ai-timestamp mono" data-ai-time></span>
+      </div>
+      <div id="reasoning-content"></div>
+    </div>
+
+    <!-- Simulation control -->
+    <div id="sim-control" class="overlay-panel bottom-center">
+      <button id="sim-toggle" class="sim-btn mono" title="Run test simulation">
+        <span class="sim-play">&#9654;</span> SIMULATION
+      </button>
+    </div>
+
+    <!-- Simulation active badge -->
+    <div id="sim-badge" class="sim-badge mono hidden">
+      <span class="sim-pulse"></span> SIMULATION ACTIVE
+    </div>
+
+    <!-- FPS counter (dev) -->
+    <div id="fps-counter" class="overlay-panel bottom-right mono">
+      <span data-fps>60</span> FPS
+    </div>
+
+    <!-- Connection indicator -->
+    <div id="connection-indicator" class="status-dot"></div>
+
+    <!-- Disconnected overlay -->
+    <div id="disconnected-overlay" class="hidden">
+      <div class="disconnect-content">
+        <div class="disconnect-icon">&#x26A0;</div>
+        <div class="disconnect-text">DISCONNECTED</div>
+        <div class="disconnect-sub">Attempting to reconnect&hellip;</div>
+      </div>
+    </div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/static/shared/connection.js"></script>
-  <script>
-    const socket = connectToMesh('screen', (state) => {
-      document.getElementById('tel-packets').textContent = state.stats.packets_total;
-      document.getElementById('tel-drift').textContent = state.stats.sync_drift_ms + 'ms';
-      document.getElementById('tel-nodes').textContent = Object.keys(state.nodes).length;
-    });
-
-    socket.on('cycle_tick', (data) => {
-      document.getElementById('cycle-display').textContent = 'Cycle ' + data.number;
-      document.getElementById('phase-display').textContent = data.phase.toUpperCase().replace(/_/g, ' ');
-    });
-  </script>
+  <script src="/static/screen/render.js"></script>
+  <script src="/static/screen/script.js"></script>
 </body>
 </html>

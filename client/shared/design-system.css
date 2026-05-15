@@ -1,16 +1,16 @@
 :root {
   /* Primary backgrounds */
-  --bg-base: #0A0E1A;
+  --bg-deep: #0A0E1A;
   --bg-panel: #131826;
   --bg-elevated: #1B2235;
-  --bg-border: #2A3447;
+  --border-default: #2A3447;
 
   /* Operational accents */
-  --green: #4ADE80;
-  --amber: #FBBF24;
-  --red: #EF4444;
-  --cyan: #22D3EE;
-  --gray: #475569;
+  --accent-green: #4ADE80;
+  --accent-amber: #FBBF24;
+  --accent-red: #EF4444;
+  --accent-cyan: #22D3EE;
+  --accent-gray: #475569;
 
   /* Text */
   --text-primary: #E2E8F0;
@@ -18,9 +18,30 @@
   --text-muted: #64748B;
   --text-bright: #F8FAFC;
 
+  /* Spacing (8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --space-7: 64px;
+
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  /* Type scale */
+  --text-hero: 3rem;
+  --text-h1: 2rem;
+  --text-h2: 1.5rem;
+  --text-h3: 1.25rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-tiny: 0.75rem;
+
+  /* Easing */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 *, *::before, *::after {
@@ -31,12 +52,117 @@
 
 body {
   font-family: var(--font-sans);
-  background: var(--bg-base);
+  background: var(--bg-deep);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.mono {
+/* --- Utility classes --- */
+
+.mono { font-family: var(--font-mono); }
+.text-bright { color: var(--text-bright); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+/* Status dot — 10px circle, color per status, optional pulse */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-gray);
+  transition: background 0.3s var(--ease-default);
+}
+.status-dot.connected { background: var(--accent-green); }
+.status-dot.stale     { background: var(--accent-amber); }
+.status-dot.error     { background: var(--accent-red); }
+
+.status-dot.pulse {
+  animation: status-pulse 2s infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+  50%      { box-shadow: 0 0 0 4px currentColor; }
+}
+
+/* Panel base */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: var(--space-3);
+}
+
+.panel-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: var(--space-4);
+}
+
+/* Telemetry row */
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-1) 0;
   font-family: var(--font-mono);
+  font-size: var(--text-tiny);
+  border-bottom: 1px solid var(--border-default);
+}
+.telemetry-row:last-child { border-bottom: none; }
+.telemetry-row .label { color: var(--text-secondary); }
+.telemetry-row .value { color: var(--text-primary); }
+
+/* Action button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s var(--ease-default);
+  color: var(--bg-deep);
+}
+.btn:hover { filter: brightness(1.1); }
+.btn:active { filter: brightness(0.9); }
+
+.btn-primary { background: var(--accent-cyan); }
+.btn-danger  { background: var(--accent-red); }
+.btn-warning { background: var(--accent-amber); }
+.btn-neutral {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+.btn-lg { height: 48px; font-size: var(--text-body); }
+
+/* Data badge */
+.badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-tiny);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
