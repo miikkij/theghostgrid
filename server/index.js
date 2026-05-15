@@ -82,6 +82,7 @@ server.listen(port, host, () => {
   log.info('===========================================');
   log.info('  TACTICAL MESH — Server Core');
   log.info(`  http://${host}:${port}`);
+  log.info(`  http://localhost:${port}`);
   log.info(`  Cycle period: ${config.cycle.period_ms}ms`);
   log.info(`  Radios: ${config.radio.enabled ? 'enabled' : 'simulated'}`);
   log.info('===========================================');
