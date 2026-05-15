@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tactical Mesh — Operator Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/shared/design-system.css">
+  <style>
+    body { padding: 1rem; }
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--bg-border);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+    }
+    .top-bar .label { color: var(--text-muted); }
+    .top-bar .value { color: var(--text-primary); margin-right: 1.5rem; }
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--green);
+      color: var(--bg-base);
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 1rem;
+    }
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--bg-border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .panel h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .trigger-btn {
+      display: block;
+      width: 100%;
+      padding: 0.625rem 1rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid var(--bg-border);
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.1s, border-color 0.1s;
+    }
+    .trigger-btn:hover { background: var(--bg-panel); border-color: var(--cyan); }
+    .trigger-btn:active { background: var(--bg-base); }
+    .trigger-btn.danger { border-color: var(--red); }
+    .trigger-btn.danger:hover { background: #1a0a0a; }
+    .trigger-btn.warn { border-color: var(--amber); }
+    #event-log {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log-entry { padding: 0.25rem 0; border-bottom: 1px solid var(--bg-border); }
+    #conn-status {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gray);
+    }
+  </style>
+</head>
+<body>
+  <div id="conn-status"></div>
+
+  <div class="top-bar">
+    <div>
+      <span class="label">Cycle </span><span class="value" id="bar-cycle">0</span>
+      <span class="label">Nodes </span><span class="value" id="bar-nodes">0</span>
+      <span class="label">Pkts/s </span><span class="value" id="bar-packets">0</span>
+      <span class="label">Drift </span><span class="value" id="bar-drift">0ms</span>
+    </div>
+    <span class="status-badge" id="bar-status">ACTIVE</span>
+  </div>
+
+  <h1>Operator Dashboard</h1>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <h2>Scenario Triggers</h2>
+        <button class="trigger-btn danger" data-scenario="inject_jamming">Inject Jamming</button>
+        <button class="trigger-btn danger" data-scenario="drop_drone">Drop Drone</button>
+        <button class="trigger-btn warn" data-scenario="activate_decoys">Activate Decoys</button>
+        <button class="trigger-btn warn" data-scenario="start_wave_pattern">Start Wave Pattern</button>
+        <button class="trigger-btn danger" data-scenario="trigger_honeypot">Trigger Honeypot</button>
+        <button class="trigger-btn" data-scenario="force_ai_adaptation">Force AI Adaptation</button>
+        <button class="trigger-btn" data-scenario="pause_cycles">Pause Cycles</button>
+        <button class="trigger-btn danger" data-scenario="reset_state">Reset State</button>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <h2>Event Log</h2>
+        <div id="event-log">
+          <div class="log-entry">Waiting for events...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/shared/connection.js"></script>
+  <script>
+    const logEl = document.getElementById('event-log');
+    let eventCount = 0;
+
+    function addLogEntry(text) {
+      eventCount++;
+      const ts = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = ts + ' ' + text;
+      logEl.prepend(entry);
+      while (logEl.children.length > 50) logEl.removeChild(logEl.lastChild);
+    }
+
+    const socket = connectToMesh('ops', (state) => {
+      document.getElementById('bar-nodes').textContent = Object.keys(state.nodes).length;
+      document.getElementById('bar-packets').textContent = state.stats.packets_total;
+      document.getElementById('bar-drift').textContent = state.stats.sync_drift_ms + 'ms';
+    });
+
+    socket.on('cycle_tick', (data) => {
+      document.getElementById('bar-cycle').textContent = data.number;
+    });
+
+    socket.on('scenario_triggered', (data) => {
+      addLogEntry('Scenario: ' + data.scenario);
+    });
+
+    socket.on('node_state_change', (data) => {
+      addLogEntry('Node: ' + data.path + ' -> ' + JSON.stringify(data.value));
+    });
+
+    socket.on('alert', (data) => {
+      addLogEntry('ALERT: ' + JSON.stringify(data));
+    });
+
+    socket.on('ai_decision', (data) => {
+      addLogEntry('AI: ' + JSON.stringify(data));
+    });
+
+    document.querySelectorAll('.trigger-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const scenario = btn.dataset.scenario;
+        socket.emit('ops.trigger_scenario', { scenario });
+        addLogEntry('Triggered: ' + scenario);
+        btn.style.opacity = '0.5';
+        setTimeout(() => { btn.style.opacity = '1'; }, 200);
+      });
+    });
+  </script>
+</body>
+</html>

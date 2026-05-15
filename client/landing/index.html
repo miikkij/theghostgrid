@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tactical Mesh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/shared/design-system.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+    .tagline {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+    .hook {
+      max-width: 36rem;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+      border-left: 3px solid var(--cyan);
+      padding-left: 1rem;
+      text-align: left;
+    }
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 3rem;
+    }
+    .nav a {
+      display: block;
+      padding: 0.75rem 2rem;
+      border: 1px solid var(--bg-border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .nav a:hover {
+      background: var(--bg-panel);
+      border-color: var(--cyan);
+    }
+    .nav a.primary {
+      background: var(--cyan);
+      color: var(--bg-base);
+      border-color: var(--cyan);
+    }
+    .nav a.primary:hover {
+      opacity: 0.9;
+    }
+    hr {
+      width: 100%;
+      max-width: 36rem;
+      border: none;
+      border-top: 1px solid var(--bg-border);
+      margin: 1.5rem 0;
+    }
+    .pillars {
+      max-width: 36rem;
+      text-align: left;
+    }
+    .pillars h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .pillar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .pillar-name {
+      flex-shrink: 0;
+      width: 8rem;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--cyan);
+    }
+    .pillar-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    #conn-status {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gray);
+    }
+  </style>
+</head>
+<body>
+  <div id="conn-status"></div>
+
+  <h1>TACTICAL MESH</h1>
+  <p class="tagline">Drone-Coordinated Resilient Communications</p>
+
+  <p class="hook">
+    The architecture is anchored in a sync beacon you cannot jam.
+    Everything else is built on that.
+  </p>
+
+  <div class="nav">
+    <a href="/phone" class="primary">Connect as Node</a>
+    <a href="/screen">View Big Screen</a>
+    <a href="/ops">View Operator Dashboard</a>
+  </div>
+
+  <hr>
+
+  <div class="pillars">
+    <h2>Four Pillars</h2>
+    <div class="pillar">
+      <span class="pillar-name">Sync Beacon</span>
+      <span class="pillar-desc">Fiber-tethered drone, EW-immune timing</span>
+    </div>
+    <div class="pillar">
+      <span class="pillar-name">Burst Mesh</span>
+      <span class="pillar-desc">Sub-50ms windows under cover signal</span>
+    </div>
+    <div class="pillar">
+      <span class="pillar-name">Deception</span>
+      <span class="pillar-desc">Decoys indistinguishable from real soldiers</span>
+    </div>
+    <div class="pillar">
+      <span class="pillar-name">Adaptive AI</span>
+      <span class="pillar-desc">Air-gappable, audit-first, ROE-bound</span>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/shared/connection.js"></script>
+  <script>connectToMesh('observer');</script>
+</body>
+</html>

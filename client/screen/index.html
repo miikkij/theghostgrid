@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tactical Mesh — Big Screen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/shared/design-system.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .header {
+      position: fixed;
+      top: 1rem;
+      left: 1.5rem;
+      font-family: var(--font-mono);
+    }
+    .header .title {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    #cycle-display {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--cyan);
+    }
+    #phase-display {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .telemetry {
+      position: fixed;
+      top: 1rem;
+      right: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: right;
+      line-height: 1.8;
+    }
+    .telemetry .value {
+      color: var(--text-primary);
+    }
+    .center-msg {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      display: inline-block;
+      animation: pulse 1s infinite;
+      margin-right: 0.5rem;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    #conn-status {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gray);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">Tactical Mesh &mdash; Operator Screen</div>
+    <div id="cycle-display">Cycle 0</div>
+    <div id="phase-display">IDLE</div>
+  </div>
+
+  <div class="telemetry">
+    <div>Packets <span class="value" id="tel-packets">0</span></div>
+    <div>Drift <span class="value" id="tel-drift">0ms</span></div>
+    <div>Nodes <span class="value" id="tel-nodes">0</span></div>
+    <div>AI <span class="value" id="tel-ai">STANDBY</span></div>
+  </div>
+
+  <div class="center-msg">
+    <span class="pulse"></span>
+    Big Screen visualization &mdash; Canvas renderer will be built by Component F
+  </div>
+
+  <div id="conn-status"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/shared/connection.js"></script>
+  <script>
+    const socket = connectToMesh('screen', (state) => {
+      document.getElementById('tel-packets').textContent = state.stats.packets_total;
+      document.getElementById('tel-drift').textContent = state.stats.sync_drift_ms + 'ms';
+      document.getElementById('tel-nodes').textContent = Object.keys(state.nodes).length;
+    });
+
+    socket.on('cycle_tick', (data) => {
+      document.getElementById('cycle-display').textContent = 'Cycle ' + data.number;
+      document.getElementById('phase-display').textContent = data.phase.toUpperCase().replace(/_/g, ' ');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+:root {
+  /* Primary backgrounds */
+  --bg-base: #0A0E1A;
+  --bg-panel: #131826;
+  --bg-elevated: #1B2235;
+  --bg-border: #2A3447;
+
+  /* Operational accents */
+  --green: #4ADE80;
+  --amber: #FBBF24;
+  --red: #EF4444;
+  --cyan: #22D3EE;
+  --gray: #475569;
+
+  /* Text */
+  --text-primary: #E2E8F0;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-bright: #F8FAFC;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}

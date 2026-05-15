@@ -1,0 +1,21 @@
+{
+  "name": "tactical-mesh",
+  "version": "0.1.0",
+  "description": "Drone-coordinated resilient tactical mesh communications",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "socket.io": "^4.8.0",
+    "dotenv": "^16.4.0",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.3.0",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

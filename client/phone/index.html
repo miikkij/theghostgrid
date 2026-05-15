@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Tactical Mesh — Node</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/shared/design-system.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+    }
+    #landing {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+      transition: opacity 0.6s;
+    }
+    #landing h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 0.5rem;
+    }
+    #landing .sub {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+    }
+    .connecting-pulse {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--cyan);
+      margin: 2rem 0;
+      animation: ring 1.2s ease-out infinite;
+    }
+    @keyframes ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    #node-view {
+      display: none;
+      width: 100%;
+      max-width: 400px;
+    }
+    #callsign {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+    #role-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 4px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-border);
+      color: var(--cyan);
+      margin: 0.5rem 0 1.5rem;
+    }
+    #state-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--bg-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    #node-state {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    #countdown {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    #neighbors {
+      margin-bottom: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+    #events {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    /* Alert overlay */
+    #alert-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--red);
+      color: var(--text-bright);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      animation: flash 0.3s ease-in-out 3;
+    }
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    #alert-overlay h2 { font-size: 2rem; margin-bottom: 1rem; }
+    #alert-overlay p { font-size: 1.125rem; }
+
+    #conn-status {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gray);
+    }
+  </style>
+</head>
+<body>
+  <div id="conn-status"></div>
+
+  <div id="landing">
+    <h1>TACTICAL MESH</h1>
+    <p class="sub">Connecting you to the network...</p>
+    <div class="connecting-pulse"></div>
+  </div>
+
+  <div id="node-view">
+    <div id="callsign">---</div>
+    <div id="role-badge">---</div>
+
+    <div id="state-card">
+      <div id="node-state">LISTENING</div>
+      <div id="countdown">&mdash;</div>
+    </div>
+
+    <div class="section-title">Neighbors</div>
+    <div id="neighbors">Discovering...</div>
+
+    <div class="section-title">Recent</div>
+    <div id="events">Waiting for events...</div>
+  </div>
+
+  <div id="alert-overlay">
+    <h2 id="alert-title">ALERT</h2>
+    <p id="alert-body"></p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/shared/connection.js"></script>
+  <script>
+    const STATE_COLORS = {
+      LISTENING: 'var(--cyan)',
+      SYNC: 'var(--cyan)',
+      TX: 'var(--amber)',
+      RX: 'var(--green)',
+      JAMMED: 'var(--red)',
+      RELAYED: 'var(--green)',
+      DEAD: 'var(--gray)',
+    };
+
+    const events = [];
+    let myCallsign = null;
+
+    const socket = connectToMesh('phone');
+
+    socket.on('identity', (data) => {
+      myCallsign = data.callsign;
+      document.getElementById('callsign').textContent = data.callsign;
+      document.getElementById('role-badge').textContent = data.role;
+
+      // Transition from landing to node view
+      const landing = document.getElementById('landing');
+      landing.style.opacity = '0';
+      setTimeout(() => {
+        landing.style.display = 'none';
+        document.getElementById('node-view').style.display = 'block';
+      }, 600);
+    });
+
+    socket.on('cycle_tick', (data) => {
+      document.getElementById('countdown').textContent = data.phase.toUpperCase().replace(/_/g, ' ');
+
+      // Vibrate on burst phase
+      if (data.phase === 'sync_beta_burst' && navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    });
+
+    socket.on('node_state_change', (data) => {
+      if (data.callsign === myCallsign && data.state) {
+        const el = document.getElementById('node-state');
+        el.textContent = data.state;
+        el.style.color = STATE_COLORS[data.state] || 'var(--text-primary)';
+      }
+    });
+
+    socket.on('alert', (data) => {
+      const overlay = document.getElementById('alert-overlay');
+      document.getElementById('alert-title').textContent = data.title || 'ALERT';
+      document.getElementById('alert-body').textContent = data.message || '';
+      overlay.style.display = 'flex';
+
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+
+      setTimeout(() => { overlay.style.display = 'none'; }, 30000);
+    });
+
+    // Wake lock
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          await navigator.wakeLock.request('screen');
+        }
+      } catch (_) { /* not critical */ }
+    }
+    requestWakeLock();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    });
+  </script>
+</body>
+</html>
