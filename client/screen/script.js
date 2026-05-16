@@ -109,14 +109,11 @@ function updateOverlays() {
   if (overlayRefs.channel) {
     var ch = state.channel;
     var isBurst = state.cycle.phase === 'burst_window' || state.cycle.phase === 'sync_beta_burst';
-    if (isBurst && ch.sequence.length > 0) {
-      var display = ch.sequence.map(function(c, i) {
-        return i === ch.hop_index ? '[' + c + ']' : String(c);
-      }).join(' → ');
-      overlayRefs.channel.textContent = display;
+    if (isBurst && ch.current) {
+      overlayRefs.channel.textContent = ch.current;
       overlayRefs.channel.style.color = 'var(--accent-cyan)';
     } else if (ch.current) {
-      overlayRefs.channel.textContent = 'CH ' + ch.current;
+      overlayRefs.channel.textContent = ch.current;
       overlayRefs.channel.style.color = 'var(--text-primary)';
     } else {
       overlayRefs.channel.textContent = '--';
