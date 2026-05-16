@@ -85,9 +85,14 @@
     // Incremental node state changes (keeps minimap and status bar live)
     sock.on('node_state_change', function (data) {
       if (!data.nodeId) return;
-      if (!state.nodes[data.nodeId]) state.nodes[data.nodeId] = {};
+      var isNew = !state.nodes[data.nodeId];
+      if (isNew) state.nodes[data.nodeId] = {};
       Object.assign(state.nodes[data.nodeId], data);
       updateStatusBar();
+      // Enable pattern buttons when first decoy/honeypot appears
+      if (isNew && (data.type === 'decoy' || data.type === 'honeypot')) {
+        Controls.setDecoysActive(true);
+      }
     });
 
     sock.on('event', function (event) {
@@ -162,6 +167,7 @@
       hideBanner();
       setControlsEnabled(true);
       Controls.setPaused(false);
+      Controls.setDecoysActive(hasDecoys());
     });
 
     sock.on('disconnect', function () {
@@ -522,6 +528,14 @@
     for (var i = 0; i < buttons.length; i++) {
       buttons[i].disabled = !enabled;
     }
+  }
+
+  function hasDecoys() {
+    for (var id in state.nodes) {
+      var t = state.nodes[id].type;
+      if (t === 'decoy' || t === 'honeypot') return true;
+    }
+    return false;
   }
 
   // --- Utilities ---

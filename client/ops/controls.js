@@ -247,10 +247,20 @@ var Controls = (function () {
     });
   }
 
+  var REQUIRES_DECOYS = ['pattern_linear', 'pattern_convoy', 'pattern_radial'];
+
+  function setDecoysActive(active) {
+    REQUIRES_DECOYS.forEach(function (name) {
+      var btn = document.querySelector('[data-trigger="' + name + '"]');
+      if (btn) btn.disabled = !active;
+    });
+  }
+
   return {
     init: init,
     setPaused: setPaused,
     setPatternActive: setPatternActive,
+    setDecoysActive: setDecoysActive,
     resetPatterns: resetPatterns,
     getActivePatterns: function () { return activePatterns; },
   };
