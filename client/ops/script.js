@@ -536,13 +536,23 @@
       minimapCtx.fill();
     }
 
-    // Nodes
+    // Nodes — ops shows LAST REPORTED position (fog of war)
+    // HQ only knows where a soldier IS if they've reported in
     var nodeIds = Object.keys(state.nodes);
     for (var ni = 0; ni < nodeIds.length; ni++) {
-      var node = state.nodes[nodeIds[ni]];
+      var nodeId = nodeIds[ni];
+      var node = state.nodes[nodeId];
       if (!node.position) continue;
-      var nx = node.position.x * w;
-      var ny = node.position.y * h;
+
+      // For soldiers: use last reported position from units table if available
+      var pos = node.position;
+      var unit = state.units ? state.units[nodeId] : null;
+      if (node.type === 'soldier' && unit && unit.position) {
+        pos = unit.position;
+      }
+
+      var nx = pos.x * w;
+      var ny = pos.y * h;
 
       var color, size;
       switch (node.type) {
@@ -551,7 +561,15 @@
         default:         color = '#22D3EE'; size = 3.5; break;
       }
 
-      if (node.state === 'jammed') color = '#EF4444';
+      // Stale data indicator — dim soldiers that haven't reported recently
+      if (node.type === 'soldier' && unit && unit.lastReport) {
+        var age = Date.now() - unit.lastReport;
+        if (age > 15000) { color = '#64748B'; } // >15s stale → muted
+      } else if (node.type === 'soldier' && !unit) {
+        color = '#475569'; // never reported → gray
+      }
+
+      if (node.state === 'jammed' || node.state === 'JAMMED') color = '#EF4444';
 
       minimapCtx.fillStyle = color;
       minimapCtx.beginPath();

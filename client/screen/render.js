@@ -41,6 +41,7 @@ class BattlefieldRenderer {
     this._drawJammingZones(state.jamming_zones, time);
     this._drawHQ();
     this._drawFiberTethers(state.drones);
+    this._drawDroneLinks(state.drones, time);
     this._drawDrones(state.drones, time);
     this._drawSyncPulses(state.cycle, state.drones, time);
     this._drawTransmissionArcs(state.active_transmissions, state.nodes, time);
@@ -167,6 +168,51 @@ class BattlefieldRenderer {
 
       ctx.restore();
     }
+  }
+
+  // --- Drone optical inter-links ---
+
+  _drawDroneLinks(drones, time) {
+    const ctx = this.ctx;
+    const entries = Object.entries(drones || {});
+    if (entries.length < 2) return;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(74, 222, 128, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 4]);
+
+    // Connect each drone to its nearest neighbors
+    for (let i = 0; i < entries.length; i++) {
+      const [, a] = entries[i];
+      const ax = a.position.x * this.width;
+      const ay = a.position.y * this.height;
+
+      for (let j = i + 1; j < entries.length; j++) {
+        const [, b] = entries[j];
+        const bx = b.position.x * this.width;
+        const by = b.position.y * this.height;
+
+        // Animated pulse along the link
+        const phase = (time * 0.0008 + i * 0.3 + j * 0.7) % 1;
+        const px = ax + (bx - ax) * phase;
+        const py = ay + (by - ay) * phase;
+
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+
+        // Traveling dot (optical data)
+        ctx.fillStyle = 'rgba(74, 222, 128, 0.5)';
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   // --- Fiber tethers (drone → HQ) ---
