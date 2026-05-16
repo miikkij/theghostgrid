@@ -3,158 +3,197 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tactical Mesh</title>
+  <meta name="theme-color" content="#0A0E1A">
+  <title>Tactical Mesh — Drone-Coordinated Resilient Communications</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/shared/design-system.css">
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 2rem;
-      text-align: center;
-    }
-    h1 {
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--text-bright);
-      letter-spacing: -0.02em;
-      margin-bottom: 0.25rem;
-    }
-    .tagline {
-      font-size: 1.125rem;
-      color: var(--text-secondary);
-      margin-bottom: 2rem;
-    }
-    .hook {
-      max-width: 36rem;
-      font-size: 1rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin-bottom: 2.5rem;
-      border-left: 3px solid var(--cyan);
-      padding-left: 1rem;
-      text-align: left;
-    }
-    .nav {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin-bottom: 3rem;
-    }
-    .nav a {
-      display: block;
-      padding: 0.75rem 2rem;
-      border: 1px solid var(--bg-border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .nav a:hover {
-      background: var(--bg-panel);
-      border-color: var(--cyan);
-    }
-    .nav a.primary {
-      background: var(--cyan);
-      color: var(--bg-base);
-      border-color: var(--cyan);
-    }
-    .nav a.primary:hover {
-      opacity: 0.9;
-    }
-    hr {
-      width: 100%;
-      max-width: 36rem;
-      border: none;
-      border-top: 1px solid var(--bg-border);
-      margin: 1.5rem 0;
-    }
-    .pillars {
-      max-width: 36rem;
-      text-align: left;
-    }
-    .pillars h2 {
-      font-size: 0.875rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-    }
-    .pillar {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 0.75rem;
-    }
-    .pillar-name {
-      flex-shrink: 0;
-      width: 8rem;
-      font-family: var(--font-mono);
-      font-size: 0.875rem;
-      color: var(--cyan);
-    }
-    .pillar-desc {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    #conn-status {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--gray);
-    }
-  </style>
+  <link rel="stylesheet" href="/static/landing/style.css">
 </head>
 <body>
-  <div id="conn-status"></div>
+  <main class="landing-page">
 
-  <h1>TACTICAL MESH</h1>
-  <p class="tagline">Drone-Coordinated Resilient Communications</p>
+    <!-- Hero section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1 class="project-name">TACTICAL MESH</h1>
+        <p class="tagline">Drone-Coordinated Resilient Communications</p>
+        <hr class="divider">
+        <p class="anchor-statement">
+          The architecture is anchored in a sync beacon you cannot jam.
+          Everything else is built on that.
+        </p>
+      </div>
 
-  <p class="hook">
-    The architecture is anchored in a sync beacon you cannot jam.
-    Everything else is built on that.
-  </p>
+      <div class="hero-visual" aria-label="Sync beacon diagram showing fiber-tethered drone providing time discipline to ground mesh nodes">
+        <svg viewBox="0 0 400 400" class="sync-beacon-visual" aria-hidden="true">
+          <defs>
+            <linearGradient id="fiber-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#4ADE80" stop-opacity="0.1"/>
+              <stop offset="50%" stop-color="#4ADE80" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#4ADE80" stop-opacity="0.2"/>
+            </linearGradient>
+            <radialGradient id="drone-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#4ADE80" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#4ADE80" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="glow-filter">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
 
-  <div class="nav">
-    <a href="/phone" class="primary">Connect as Node</a>
-    <a href="/screen">View Big Screen</a>
-    <a href="/ops">View Operator Dashboard</a>
-  </div>
+          <!-- Terrain baseline -->
+          <path d="M0 350 Q50 340 100 345 Q150 335 200 340 Q250 345 300 338 Q350 342 400 340 L400 400 L0 400 Z"
+                fill="#131826" opacity="0.6"/>
 
-  <hr>
+          <!-- Sync pulses radiating from drone -->
+          <circle cx="200" cy="95" r="15" fill="none" stroke="#22D3EE" stroke-width="2" opacity="0.7">
+            <animate attributeName="r" from="15" to="180" dur="2.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.7" to="0" dur="2.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="200" cy="95" r="15" fill="none" stroke="#22D3EE" stroke-width="1.5" opacity="0.5">
+            <animate attributeName="r" from="15" to="180" dur="2.5s" begin="0.83s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.5" to="0" dur="2.5s" begin="0.83s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="200" cy="95" r="15" fill="none" stroke="#22D3EE" stroke-width="1" opacity="0.3">
+            <animate attributeName="r" from="15" to="180" dur="2.5s" begin="1.67s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.3" to="0" dur="2.5s" begin="1.67s" repeatCount="indefinite"/>
+          </circle>
 
-  <div class="pillars">
-    <h2>Four Pillars</h2>
-    <div class="pillar">
-      <span class="pillar-name">Sync Beacon</span>
-      <span class="pillar-desc">Fiber-tethered drone, EW-immune timing</span>
-    </div>
-    <div class="pillar">
-      <span class="pillar-name">Burst Mesh</span>
-      <span class="pillar-desc">Sub-50ms windows under cover signal</span>
-    </div>
-    <div class="pillar">
-      <span class="pillar-name">Deception</span>
-      <span class="pillar-desc">Decoys indistinguishable from real soldiers</span>
-    </div>
-    <div class="pillar">
-      <span class="pillar-name">Adaptive AI</span>
-      <span class="pillar-desc">Air-gappable, audit-first, ROE-bound</span>
-    </div>
-  </div>
+          <!-- Drone body -->
+          <circle cx="200" cy="95" r="20" fill="url(#drone-glow)"/>
+          <polygon points="200,78 186,104 214,104" fill="#4ADE80" filter="url(#glow-filter)"/>
+          <!-- Drone arms -->
+          <line x1="186" y1="96" x2="172" y2="88" stroke="#4ADE80" stroke-width="1.5" opacity="0.7"/>
+          <line x1="214" y1="96" x2="228" y2="88" stroke="#4ADE80" stroke-width="1.5" opacity="0.7"/>
+          <!-- Rotors -->
+          <ellipse cx="172" cy="86" rx="12" ry="2" fill="#4ADE80" opacity="0.4">
+            <animate attributeName="rx" values="12;8;12" dur="0.15s" repeatCount="indefinite"/>
+          </ellipse>
+          <ellipse cx="228" cy="86" rx="12" ry="2" fill="#4ADE80" opacity="0.4">
+            <animate attributeName="rx" values="8;12;8" dur="0.15s" repeatCount="indefinite"/>
+          </ellipse>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/static/shared/connection.js"></script>
-  <script>connectToMesh('observer');</script>
+          <!-- Fiber tether (drone to HQ) -->
+          <path d="M200 104 Q180 200 60 355" stroke="url(#fiber-grad)" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+          <text x="115" y="245" font-family="JetBrains Mono, monospace" font-size="8" fill="#4ADE80" opacity="0.5"
+                transform="rotate(-55 115 245)">FIBER TETHER</text>
+
+          <!-- HQ node -->
+          <rect x="35" y="345" width="48" height="24" rx="3" fill="#1B2235" stroke="#F8FAFC" stroke-width="1.5"/>
+          <text x="59" y="361" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" fill="#F8FAFC">HQ</text>
+
+          <!-- Ground nodes (real soldiers) -->
+          <circle cx="120" cy="320" r="6" fill="#22D3EE" opacity="0.9"/>
+          <text x="120" y="336" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#22D3EE" opacity="0.6">A-3</text>
+
+          <circle cx="175" cy="330" r="6" fill="#22D3EE" opacity="0.9"/>
+          <text x="175" y="346" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#22D3EE" opacity="0.6">B-1</text>
+
+          <circle cx="230" cy="325" r="6" fill="#22D3EE" opacity="0.9"/>
+          <text x="230" y="341" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#22D3EE" opacity="0.6">C-7</text>
+
+          <circle cx="290" cy="318" r="6" fill="#22D3EE" opacity="0.9"/>
+          <text x="290" y="334" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#22D3EE" opacity="0.6">D-4</text>
+
+          <circle cx="345" cy="328" r="6" fill="#22D3EE" opacity="0.9"/>
+          <text x="345" y="344" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" fill="#22D3EE" opacity="0.6">E-2</text>
+
+          <!-- Decoy nodes (smaller, gray, no labels) -->
+          <circle cx="140" cy="290" r="3.5" fill="#475569" opacity="0.6"/>
+          <circle cx="195" cy="295" r="3.5" fill="#475569" opacity="0.6"/>
+          <circle cx="255" cy="288" r="3.5" fill="#475569" opacity="0.6"/>
+          <circle cx="310" cy="298" r="3.5" fill="#475569" opacity="0.6"/>
+          <circle cx="160" cy="305" r="3" fill="#475569" opacity="0.4"/>
+          <circle cx="270" cy="308" r="3" fill="#475569" opacity="0.4"/>
+
+          <!-- Mesh links between ground nodes (subtle) -->
+          <line x1="120" y1="320" x2="175" y2="330" stroke="#22D3EE" stroke-width="0.5" opacity="0.15"/>
+          <line x1="175" y1="330" x2="230" y2="325" stroke="#22D3EE" stroke-width="0.5" opacity="0.15"/>
+          <line x1="230" y1="325" x2="290" y2="318" stroke="#22D3EE" stroke-width="0.5" opacity="0.15"/>
+          <line x1="290" y1="318" x2="345" y2="328" stroke="#22D3EE" stroke-width="0.5" opacity="0.15"/>
+          <line x1="120" y1="320" x2="230" y2="325" stroke="#22D3EE" stroke-width="0.5" opacity="0.08"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- CTA section: QR code + navigation links -->
+    <section class="cta">
+      <div class="qr-section">
+        <div class="qr-container">
+          <canvas id="qr-code" class="qr-code" width="200" height="200"></canvas>
+          <p class="qr-label">Scan to join the mesh</p>
+        </div>
+      </div>
+
+      <div class="links">
+        <a href="/phone" class="link-button primary">Connect as Node</a>
+        <a href="/screen" class="link-button">View Big Screen</a>
+        <a href="/ops" class="link-button">View Operator Dashboard</a>
+      </div>
+    </section>
+
+    <!-- Four pillars -->
+    <section class="pillars">
+      <h2>FOUR PILLARS</h2>
+      <div class="pillars-grid">
+        <article class="pillar">
+          <div class="pillar-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#4ADE80" stroke-width="1.5" aria-hidden="true">
+              <path d="M12 2L8 12h8L12 2z"/>
+              <line x1="12" y1="12" x2="12" y2="22"/>
+              <circle cx="12" cy="22" r="1.5"/>
+            </svg>
+          </div>
+          <h3>Sync Beacon</h3>
+          <p>Fiber-tethered drone provides time discipline that cannot be reached by enemy electronic warfare.</p>
+        </article>
+        <article class="pillar">
+          <div class="pillar-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#22D3EE" stroke-width="1.5" aria-hidden="true">
+              <rect x="3" y="8" width="4" height="10" rx="1"/>
+              <rect x="10" y="4" width="4" height="14" rx="1"/>
+              <rect x="17" y="10" width="4" height="8" rx="1"/>
+            </svg>
+          </div>
+          <h3>Burst Mesh</h3>
+          <p>Sub-50ms transmission windows under cover signal, frequency-hopped across the band.</p>
+        </article>
+        <article class="pillar">
+          <div class="pillar-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FBBF24" stroke-width="1.5" aria-hidden="true">
+              <circle cx="8" cy="12" r="3"/>
+              <circle cx="16" cy="12" r="3" stroke-dasharray="2 2"/>
+              <line x1="11" y1="12" x2="13" y2="12"/>
+            </svg>
+          </div>
+          <h3>Statistical Deception</h3>
+          <p>Cheap decoy emitters indistinguishable from real soldiers at the protocol level.</p>
+        </article>
+        <article class="pillar">
+          <div class="pillar-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#E2E8F0" stroke-width="1.5" aria-hidden="true">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+              <path d="M15 7l2-2M9 7L7 5" stroke-width="1"/>
+            </svg>
+          </div>
+          <h3>Adaptive AI</h3>
+          <p>Air-gappable, audit-first, ROE-bound AI loop that learns from observed enemy reactions.</p>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      <p>Junction &times; Aalto Defence Hackathon 2026 &mdash; Tactical Mesh by Kova Labs</p>
+    </footer>
+  </main>
+
+  <script src="/static/landing/script.js"></script>
 </body>
 </html>

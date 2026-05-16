@@ -189,3 +189,51 @@ The spec says 10 FPS is sufficient for the minimap. Using `setInterval(renderMin
 ### Event log uses DOM fragment construction instead of innerHTML
 
 Each `renderEventLog` call builds a `DocumentFragment` with proper DOM elements rather than concatenating HTML strings. This prevents XSS from malicious event messages while avoiding the overhead of diffing. The fragment is appended once, minimizing layout thrash.
+
+---
+
+## 2026-05-16 — Audience Phone Client
+
+### Plain script tags with IIFE, not ES modules
+
+The spec suggests `type="module"` for `script.js`. The phone client uses a plain `<script>` tag with an IIFE wrapper, matching the Big Screen and Dashboard pattern. Reason: `connection.js` is loaded as a plain script exposing `connectToMesh` globally; mixing module and non-module scripts adds CORS and load-order complexity for a 3-file client application.
+
+### Dual event name support (identity + phone.assigned)
+
+The server sends `identity` for phone assignment (per Server Core implementation), but the spec also references `phone.assigned`. The phone client listens to both event names with identical handlers so it works regardless of which the server uses. No duplication risk — only the first to fire sets the callsign.
+
+### Mock mode inline, not separate file
+
+Mock mode is triggered by `?mock` URL parameter and runs within `script.js`. It simulates identity assignment, state cycling, neighbors, events, and a timed alert. This exercises every rendering path without a server, useful for design review on real mobile devices.
+
+### Touch-based wake lock reassertion for iOS
+
+iOS Safari requires a user gesture before allowing `navigator.wakeLock.request()`. A `touchstart` listener re-asserts the wake lock on any tap, ensuring the screen stays awake even after the lock is released by the OS during inactivity. The listener uses `{ passive: true }` to avoid scroll performance impact.
+
+### Countdown updates at 100ms interval, not tied to cycle_tick events
+
+The burst countdown uses `setInterval(updateCountdown, 100)` for smooth sub-second display, independent of server event frequency. The last received `cycle_tick` data is cached and the countdown is computed from wall-clock time. This avoids janky updates tied to network event arrival timing.
+
+### DocumentFragment for neighbor and event rendering
+
+Both `renderNeighbors()` and `renderEvents()` build DOM via `DocumentFragment` rather than `innerHTML` string concatenation. This prevents XSS from adversary-controlled callsigns or event data that may flow through the server, matching the Dashboard's approach.
+
+---
+
+## 2026-05-16 — Landing Page
+
+### qrcode-generator from jsDelivr CDN, not skypack
+
+The spec uses `https://cdn.skypack.dev/qrcode` (Skypack is deprecated). The landing page uses `qrcode-generator` from jsDelivr, which is a reliable, well-maintained CDN. The library is loaded dynamically with `onload`/`onerror` handlers — if the CDN is unreachable (offline demo), a text fallback displays the URL.
+
+### No Socket.IO on the landing page
+
+The original stub loaded Socket.IO and called `connectToMesh('observer')`. The production landing page removes this dependency entirely — it has no live data needs. This reduces page weight (Socket.IO client is ~50KB) and eliminates connection overhead for a page that's essentially static marketing content.
+
+### SVG sync beacon inlined, not loaded as external asset
+
+The sync beacon visualization is inline SVG in `index.html` rather than an external `.svg` file. This eliminates a network request, ensures the animation is visible on first paint, and keeps total asset count minimal. The SVG is ~3KB.
+
+### Four pillars rendered as cards with inline SVG icons
+
+Each pillar has a small hand-drawn SVG icon (drone, burst bars, real/decoy pair, AI figure). These are inline SVG, not icon fonts or image sprites, keeping the page weight under the 100KB target while adding visual distinction to the pillars section.
