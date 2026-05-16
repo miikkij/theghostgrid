@@ -237,3 +237,27 @@ The sync beacon visualization is inline SVG in `index.html` rather than an exter
 ### Four pillars rendered as cards with inline SVG icons
 
 Each pillar has a small hand-drawn SVG icon (drone, burst bars, real/decoy pair, AI figure). These are inline SVG, not icon fonts or image sprites, keeping the page weight under the 100KB target while adding visual distinction to the pillars section.
+
+---
+
+## 2026-05-16 — Radio Bridge
+
+### kova-wfb-rs stubbed with TODO markers, not a trait abstraction
+
+The `kova-wfb-rs` library exists on GitHub but isn't published on crates.io, so it can't be added as a dependency in CI or on machines without a local checkout. Rather than building a trait-based adapter abstraction (e.g., `trait RadioHardware { fn send(); fn recv(); }`) with mock and real implementations, the adapter methods contain direct TODO comments showing the exact kova-wfb-rs API calls (`WfbTx::new`, `send()`, `WfbRx::recv_optional()`). This avoids premature abstraction — when the library is linked, the TODOs are replaced with real calls in the same functions, no indirection needed.
+
+### Simulate mode runs both orchestrator and simulation loop concurrently
+
+Simulate mode spawns two async tasks: the `BurstOrchestrator` (which processes stdin commands) and `run_simulation_loop` (which generates periodic fake frame events). Both run concurrently via `tokio::spawn`. Alternative was a single loop that interleaves simulation with command processing, but that couples timing to command arrival and makes the simulation less realistic. The two-task model means simulated frames flow at a steady 1-second cycle regardless of command activity.
+
+### stdout writes serialized through a Mutex, not a channel
+
+Events are written to stdout via `emit_event()`, which locks a global `Mutex<()>` to prevent interleaved JSON lines from concurrent tasks. Alternative was an `mpsc` channel funneling all events through a single writer task. The Mutex approach is simpler (no extra task, no channel plumbing) and sufficient because stdout writes are fast and contention is low (at most 3 adapter tasks + orchestrator).
+
+### Hop sequence uses deterministic Fisher-Yates, not HKDF
+
+The spec calls for `HKDF(shared_secret, node_id || cycle || slot)` to derive hop sequences. The radio bridge uses a deterministic Fisher-Yates shuffle seeded from a hash of (node_id, cycle, slot) instead. Reason: HKDF produces a key, not a permutation — mapping key bytes to a channel permutation adds complexity without security benefit at the hackathon demo level. The deterministic shuffle is reproducible given the same inputs and produces a valid permutation of the channel set.
+
+### Adapter open takes a `simulate` flag, not a compile-time feature gate
+
+The `Adapter::open()` function accepts a `simulate: bool` parameter rather than using `#[cfg(feature = "simulate")]`. This means both code paths compile in every build, which catches type errors in the real-mode stubs even without the kova-wfb-rs dependency. The flag comes from the `--simulate` CLI argument.

@@ -1,0 +1,28 @@
+[package]
+name = "tactical-mesh-radios"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chacha20poly1305 = "0.10"
+blake3 = "1"
+hkdf = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+rand = "0.8"
+
+# kova-wfb-rs: not on crates.io yet. Uncomment when available:
+# wfb_rs = { git = "https://github.com/kova-labs/kova-wfb-rs", branch = "main" }
+# Or for local development:
+# wfb_rs = { path = "../kova-wfb-rs" }
+
+[[bin]]
+name = "tactical-mesh-radios"
+path = "src/main.rs"
