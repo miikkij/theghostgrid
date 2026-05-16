@@ -53,9 +53,6 @@
       <span class="sim-pulse"></span> SIMULATION ACTIVE
     </div>
 
-    <!-- System pulse graph -->
-    <canvas id="pulse-canvas" style="position:absolute;bottom:0;left:0;width:100%;height:48px;z-index:5;pointer-events:none;"></canvas>
-
     <!-- FPS counter (dev) -->
     <div id="fps-counter" class="overlay-panel bottom-right mono">
       <span data-fps>60</span> FPS
@@ -70,6 +67,11 @@
         <div class="disconnect-sub">Attempting to reconnect&hellip;</div>
       </div>
     </div>
+  </div>
+
+  <!-- System pulse — fixed bar below the battlefield -->
+  <div id="pulse-bar" style="position:fixed;bottom:0;left:0;right:0;height:48px;background:#0A0E1A;border-top:1px solid #2A3447;z-index:20;">
+    <canvas id="pulse-canvas" style="width:100%;height:100%;display:block;"></canvas>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>

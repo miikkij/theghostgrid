@@ -190,7 +190,7 @@
     // System pulse graph
     var pulseCanvas = document.getElementById('pulse-canvas');
     if (pulseCanvas && typeof SystemPulse !== 'undefined') {
-      var pulse = new SystemPulse(pulseCanvas, { height: 40, scrollSpeed: 50 });
+      var pulse = new SystemPulse(pulseCanvas, { height: 36, scrollSpeed: 50 });
       window.addEventListener('resize', function() { pulse._resize(); });
 
       sock.on('ai_decision', function() { pulse.push('ai_decision', 0.9); });

@@ -17,7 +17,7 @@ body.cursor-visible {
 #app {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 48px);
 }
 
 /* --- Canvas --- */
