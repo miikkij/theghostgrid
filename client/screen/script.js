@@ -15,6 +15,7 @@ var EMPTY_STATE = {
   active_alerts: [],
   stats: { packets_total: 0, packets_dropped: 0, sync_drift_ms: 0, ai_decisions: 0 },
   ai_reasoning: null,
+  channel: { current: null, sequence: [], hop_index: 0 },
 };
 
 var state = JSON.parse(JSON.stringify(EMPTY_STATE));
@@ -45,6 +46,7 @@ var overlayRefs = {
   drift: document.querySelector('[data-drift]'),
   nodes: document.querySelector('[data-nodes]'),
   decoys: document.querySelector('[data-decoys]'),
+  channel: document.querySelector('[data-channel]'),
   aiStatus: document.querySelector('[data-ai-status]'),
 };
 
@@ -103,6 +105,23 @@ function updateOverlays() {
   }
   if (overlayRefs.decoys) {
     overlayRefs.decoys.textContent = nodeValues.filter(function(n) { return n.type === 'decoy'; }).length;
+  }
+  if (overlayRefs.channel) {
+    var ch = state.channel;
+    var isBurst = state.cycle.phase === 'burst_window' || state.cycle.phase === 'sync_beta_burst';
+    if (isBurst && ch.sequence.length > 0) {
+      var display = ch.sequence.map(function(c, i) {
+        return i === ch.hop_index ? '[' + c + ']' : String(c);
+      }).join(' → ');
+      overlayRefs.channel.textContent = display;
+      overlayRefs.channel.style.color = 'var(--accent-cyan)';
+    } else if (ch.current) {
+      overlayRefs.channel.textContent = 'CH ' + ch.current;
+      overlayRefs.channel.style.color = 'var(--text-primary)';
+    } else {
+      overlayRefs.channel.textContent = '--';
+      overlayRefs.channel.style.color = 'var(--text-muted)';
+    }
   }
   if (overlayRefs.aiStatus) {
     if (state.ai_reasoning && state.ai_reasoning.classification === 'llm_unavailable') {
@@ -278,9 +297,34 @@ function startSimulation() {
 
       if (phases[phaseIdx] === 'sync_alpha') {
         state.cycle.last_alpha_ts = performance.now();
+        // Generate a new hop sequence for this cycle
+        var CHANNELS = [1, 6, 11];
+        var seq = [];
+        for (var hi = 0; hi < 10; hi++) {
+          seq.push(CHANNELS[Math.floor(Math.random() * CHANNELS.length)]);
+        }
+        state.channel.sequence = seq;
+        state.channel.hop_index = 0;
+        state.channel.current = seq[0];
       }
       if (phases[phaseIdx] === 'sync_beta_burst') {
         state.cycle.last_beta_ts = performance.now();
+      }
+      // Animate channel hopping during burst window
+      if (phases[phaseIdx] === 'burst_window' && state.channel.sequence.length > 0) {
+        var hopDelay = 5; // ~5ms per hop for visible animation
+        for (var hj = 0; hj < state.channel.sequence.length; hj++) {
+          (function(idx) {
+            _simTimers.push(setTimeout(function() {
+              if (!_simRunning) return;
+              state.channel.hop_index = idx;
+              state.channel.current = state.channel.sequence[idx];
+            }, idx * hopDelay));
+          })(hj);
+        }
+      }
+      if (phases[phaseIdx] === 'idle') {
+        state.channel.hop_index = 0;
       }
 
       phaseIdx++;
@@ -529,6 +573,14 @@ if (isMock) {
       state.ai_reasoning = decision;
       state.stats.ai_decisions++;
       showAIReasoning(decision);
+    });
+
+    socket.on('channel_changed', function(data) {
+      if (data.channel) state.channel.current = data.channel;
+      if (data.sequence) {
+        state.channel.sequence = data.sequence;
+        state.channel.hop_index = data.hop_index || 0;
+      }
     });
 
     socket.on('disconnect', function() { setDisconnected(true); });
