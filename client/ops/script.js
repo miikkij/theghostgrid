@@ -186,6 +186,32 @@
       updateSystemState('ACTIVE', 'connected');
       hideBanner();
     });
+
+    // System pulse graph
+    var pulseCanvas = document.getElementById('pulse-canvas');
+    if (pulseCanvas && typeof SystemPulse !== 'undefined') {
+      var pulse = new SystemPulse(pulseCanvas, { height: 40, scrollSpeed: 50 });
+      window.addEventListener('resize', function() { pulse._resize(); });
+
+      sock.on('ai_decision', function() { pulse.push('ai_decision', 0.9); });
+      sock.on('event', function(ev) {
+        var type = ev.type || 'default';
+        var intensity = 0.5;
+        if (type.indexOf('honeypot') >= 0) { type = 'honeypot'; intensity = 0.8; }
+        else if (type.indexOf('jam') >= 0) { type = 'jamming'; intensity = 0.85; }
+        else if (type.indexOf('alert') >= 0) { type = 'alert'; intensity = 1.0; }
+        else if (type.indexOf('ai') >= 0) { type = 'ai_decision'; intensity = 0.7; }
+        else if (type.indexOf('node_join') >= 0) { type = 'node_join'; intensity = 0.4; }
+        else if (type.indexOf('demo') >= 0) { type = 'demo'; intensity = 0.6; }
+        else if (type.indexOf('routing') >= 0) { type = 'routing'; intensity = 0.3; }
+        else if (type.indexOf('deception') >= 0 || type.indexOf('pattern') >= 0) { type = 'deception'; intensity = 0.5; }
+        pulse.push(type, intensity);
+      });
+      sock.on('cycle_tick', function(data) {
+        if (data.phase === 'sync_alpha') pulse.push('cycle', 0.08);
+      });
+      sock.on('scenario_result', function() { pulse.push('scenario', 0.5); });
+    }
   }
 
   // --- State update handler ---

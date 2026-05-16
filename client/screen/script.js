@@ -534,5 +534,28 @@ if (isMock) {
     socket.on('disconnect', function() { setDisconnected(true); });
     socket.on('connect', function() { setDisconnected(false); });
     socket.on('reconnect', function() { setDisconnected(false); });
+
+    // System pulse — feed events into the scrolling graph
+    var pulseCanvas = document.getElementById('pulse-canvas');
+    if (pulseCanvas && typeof SystemPulse !== 'undefined') {
+      var pulse = new SystemPulse(pulseCanvas, { height: 48, scrollSpeed: 50 });
+      window.addEventListener('resize', function() { pulse._resize(); });
+
+      socket.on('ai_decision', function() { pulse.push('ai_decision', 0.9); });
+      socket.on('alert', function() { pulse.push('alert', 1.0); });
+      socket.on('jamming_zones_update', function(z) { if (z && z.length) pulse.push('jamming', 0.85); });
+      socket.on('drones_update', function() { pulse.push('scenario', 0.5); });
+      socket.on('node_state_change', function(data) {
+        if (data.type === 'honeypot') pulse.push('honeypot', 0.75);
+        else if (data.type === 'decoy') pulse.push('deception', 0.3);
+        else if (data.state === 'JAMMED') pulse.push('jamming', 0.7);
+      });
+      socket.on('transmission_arc', function() { pulse.push('burst', 0.15); });
+      socket.on('cycle_tick', function(data) {
+        if (data.phase === 'sync_alpha') pulse.push('cycle', 0.1);
+      });
+      socket.on('demo_step', function() { pulse.push('demo', 0.6); });
+      socket.on('scenario_triggered', function() { pulse.push('scenario', 0.5); });
+    }
   }
 }
