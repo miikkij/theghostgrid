@@ -34,10 +34,10 @@ body.cursor-visible {
 
 .overlay-panel {
   position: absolute;
-  background: rgba(19, 24, 38, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-default);
+  background: rgba(10, 14, 26, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(42, 52, 71, 0.5);
   border-radius: 8px;
   padding: 12px 16px;
   pointer-events: none;
