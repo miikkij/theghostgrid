@@ -31,6 +31,13 @@ var Controls = (function () {
       });
     },
 
+    deploy_drone: function () {
+      socket.emit('ops.trigger_scenario', {
+        scenario: 'deploy_drone',
+        parameters: {},
+      });
+    },
+
     trigger_honeypot: function () {
       socket.emit('ops.trigger_scenario', {
         scenario: 'trigger_honeypot',
