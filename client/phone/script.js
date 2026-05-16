@@ -486,9 +486,7 @@
         node.area.y += (dy / dist) * speed;
         if (socket) socket.emit('phone.move', { callsign: node.callsign, position: node.area });
       } else {
-        // Arrived at waypoint — queue POS report
         waypoint = null;
-        enqueueMessage('POS', 'MESH');
       }
     }
 
@@ -568,6 +566,16 @@
   }
 
   initTacMap();
+
+  // --- Send message buttons ---
+  document.querySelectorAll('.send-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var msgType = btn.dataset.msg;
+      var dest = (msgType === 'CONTACT' || msgType === 'CASEVAC' || msgType === 'FIRE') ? 'HQ' : 'MESH';
+      enqueueMessage(msgType, dest);
+      vibrate(10);
+    });
+  });
 
   // --- Mock mode for standalone testing ---
   if (window.location.search.indexOf('mock') !== -1) {

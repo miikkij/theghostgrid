@@ -89,11 +89,20 @@
       <div class="map-hint">Tap to set waypoint</div>
     </section>
 
-    <!-- Outbound queue -->
+    <!-- Send message + outbound queue -->
     <section class="outbound-queue" aria-label="Outbound message queue">
-      <h3>OUTBOUND <span class="queue-count" id="queue-count">0</span></h3>
+      <div class="send-buttons">
+        <button class="send-btn" data-msg="POS">POS</button>
+        <button class="send-btn" data-msg="STATUS">STATUS</button>
+        <button class="send-btn send-btn-urgent" data-msg="CONTACT">CONTACT</button>
+        <button class="send-btn send-btn-urgent" data-msg="CASEVAC">CASEVAC</button>
+        <button class="send-btn send-btn-urgent" data-msg="FIRE">FIRE</button>
+      </div>
+      <div class="queue-header">
+        <h3>OUTBOUND <span class="queue-count" id="queue-count">0</span></h3>
+      </div>
       <ul class="queue-list" id="queue-list">
-        <li class="empty-state">Queue empty — listening</li>
+        <li class="empty-state">Radio silent — tap to queue message</li>
       </ul>
     </section>
 
