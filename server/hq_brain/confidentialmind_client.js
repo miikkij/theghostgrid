@@ -55,17 +55,12 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
     }
 
     const data = await res.json();
+
+    console.log('=== FULL API RESPONSE ===');
+    console.log(JSON.stringify(data, null, 2));
+    console.log('=== END ===');
+
     const msg = data.choices?.[0]?.message;
-    const finishReason = data.choices?.[0]?.finish_reason;
-
-    log.debug({
-      hasContent: !!msg?.content,
-      hasReasoning: !!(msg?.reasoning || msg?.reasoning_content || msg?.thinking),
-      contentLen: msg?.content?.length || 0,
-      reasoningLen: (msg?.reasoning || msg?.reasoning_content || msg?.thinking || '').length,
-      finishReason,
-    }, 'LLM response fields');
-
     return extractResponse(msg);
   } finally {
     clearTimeout(timeout);
@@ -98,12 +93,7 @@ function extractResponse(msg) {
     } catch { /* not raw JSON */ }
   }
 
-  log.warn({
-    contentLen: content?.length || 0,
-    reasoningLen: reasoning?.length || 0,
-  }, 'Content field empty or not parseable JSON');
-
-  throw new Error('ConfidentialMind returned no parseable content');
+  throw new Error('Content field empty or not JSON');
 }
 
 async function health() {

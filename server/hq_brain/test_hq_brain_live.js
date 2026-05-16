@@ -64,7 +64,6 @@ async function testTacticalHoneypotArtillery(client) {
     systemPrompt: TACTICAL_LOOP_PROMPT,
     userMessage,
     responseFormat: { type: 'json_object' },
-    maxTokens: 500,
     temperature: 0.3,
   });
   const elapsed = Date.now() - start;
@@ -110,7 +109,6 @@ async function testTacticalJamming(client) {
     systemPrompt: TACTICAL_LOOP_PROMPT,
     userMessage: JSON.stringify(context, null, 2),
     responseFormat: { type: 'json_object' },
-    maxTokens: 500,
     temperature: 0.3,
   });
 
@@ -143,7 +141,6 @@ async function testOperationalCycle(client) {
     systemPrompt: OPERATIONAL_LOOP_PROMPT,
     userMessage: JSON.stringify(summary, null, 2),
     responseFormat: { type: 'json_object' },
-    maxTokens: 800,
     temperature: 0.4,
   });
 
