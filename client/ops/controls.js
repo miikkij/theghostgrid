@@ -150,6 +150,27 @@ var Controls = (function () {
         parameters: {},
       });
     },
+
+    pause_pitch: function () {
+      socket.emit('ops.trigger_scenario', {
+        scenario: 'pause_pitch',
+        parameters: {},
+      });
+    },
+
+    resume_pitch: function () {
+      socket.emit('ops.trigger_scenario', {
+        scenario: 'resume_pitch',
+        parameters: {},
+      });
+    },
+
+    stop_pitch: function () {
+      socket.emit('ops.trigger_scenario', {
+        scenario: 'stop_pitch',
+        parameters: {},
+      });
+    },
   };
 
   // Keyboard shortcut map
