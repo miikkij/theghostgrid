@@ -213,6 +213,11 @@ const HANDLERS = {
     log.info('state reset');
   },
 
+  trigger_ai_adaptation() {
+    _state.emit('ops.trigger_ai_adaptation', {});
+    log.info('AI adaptation triggered');
+  },
+
   // Pattern shortcuts from ops buttons
   pattern_linear(params)  { HANDLERS.activate_pattern({ patternName: 'linear_translation', parameters: params }); },
   pattern_convoy(params)  { HANDLERS.activate_pattern({ patternName: 'phantom_convoy', parameters: params }); },
