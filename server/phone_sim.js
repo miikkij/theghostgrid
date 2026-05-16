@@ -108,9 +108,8 @@ function initPhoneSim() {
       if (!nodeData.position) continue;
 
       var neighborIds = computeNeighbors(callsign, nodeData.position, allNodes);
-      state.set(`nodes.${callsign}.neighbors`, neighborIds);
 
-      // Send neighbor positions so phone map can render them correctly
+      // Send neighbors directly to phones only — NOT via state.set (which leaks to ops)
       var neighborsWithPos = neighborIds.map(function (nid) {
         var n = allNodes.find(function (e) { return e[0] === nid; });
         return { id: nid, position: n ? n[1].position : null };
@@ -121,7 +120,6 @@ function initPhoneSim() {
       if (txThisCycle.has(callsign) && neighborIds.length > 0) {
         var msg = pickMessageType();
         var partner = neighborIds[Math.floor(Math.random() * neighborIds.length)];
-        // Urgent messages route to HQ via drone
         var dest = (msg.type === 'CONTACT' || msg.type === 'CASEVAC' || msg.type === 'FIRE')
           ? 'HQ' : partner;
 
@@ -140,8 +138,8 @@ function initPhoneSim() {
           msgType: msg.type,
         });
 
-        // Update unit record in state
-        updateUnitRecord(callsign, nodeData, msg.type);
+        // NO auto unit record update here — only explicit reports
+        // (SITREP or manual POS/STATUS from phone) update ops positions
 
       } else if (neighborIds.length > 0) {
         var sender = neighborIds[Math.floor(Math.random() * neighborIds.length)];
@@ -210,10 +208,12 @@ function initPhoneSim() {
         ts: Date.now(),
         message: 'HQ requests status report from all units',
       });
-      for (var [callsign] of phones) {
+      for (var [callsign, nodeData] of phones) {
         forcedTx.add(callsign);
         state.set(`nodes.${callsign}.state`, 'TX');
         state.broadcastTo('phone', 'node_state_change', { callsign, state: 'TX' });
+        // Update unit record with current position — this is the SITREP response
+        updateUnitRecord(callsign, nodeData, 'STATUS');
       }
       log.info({ count: phones.length }, 'SITREP requested — all units responding');
     }
