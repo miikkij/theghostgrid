@@ -165,8 +165,18 @@ body {
 }
 
 #controls .btn > span:first-child {
-  letter-spacing: 0.02em;
-  word-spacing: 0.25em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.ico {
+  display: inline-block;
+  width: 24px;
+  text-align: center;
+  font-style: normal;
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 /* Color-coded left borders by category */
