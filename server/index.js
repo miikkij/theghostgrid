@@ -127,11 +127,14 @@ server.listen(port, host, async () => {
     log.warn({ err: err.message }, 'HQ Brain init failed — running without AI');
   }
 
-  // Seed initial drones for visualization
+  // Seed initial drones — 3 sync + 2 decoy
   if (Object.keys(state.get('drones') || {}).length === 0) {
     state.set('drones', {
-      'DRONE-1': { position: { x: 0.35, y: 0.15 }, status: 'active', role: 'sync' },
-      'DRONE-2': { position: { x: 0.65, y: 0.12 }, status: 'active', role: 'sync' },
+      'DRONE-1': { position: { x: 0.25, y: 0.10 }, status: 'active', role: 'sync' },
+      'DRONE-2': { position: { x: 0.55, y: 0.08 }, status: 'active', role: 'sync' },
+      'DRONE-3': { position: { x: 0.80, y: 0.12 }, status: 'active', role: 'sync' },
+      'DRONE-4': { position: { x: 0.40, y: 0.20 }, status: 'active', role: 'decoy' },
+      'DRONE-5': { position: { x: 0.70, y: 0.18 }, status: 'active', role: 'decoy' },
     });
   }
 });

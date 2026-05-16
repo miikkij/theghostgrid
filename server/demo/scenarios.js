@@ -222,6 +222,19 @@ const HANDLERS = {
     log.info('AI adaptation triggered');
   },
 
+  deploy_drone(params) {
+    const drones = _state.get('drones') || {};
+    const count = Object.keys(drones).length;
+    const id = params.droneId || `DRONE-${count + 1}`;
+    const pos = params.position || {
+      x: 0.2 + Math.random() * 0.6,
+      y: 0.08 + Math.random() * 0.15,
+    };
+    const role = params.role || 'sync';
+    _state.set(`drones.${id}`, { position: pos, status: 'active', role });
+    log.info({ droneId: id, role }, 'drone deployed');
+  },
+
   // Pattern shortcuts from ops buttons
   pattern_linear(params)  { HANDLERS.activate_pattern({ patternName: 'linear_translation', parameters: params }); },
   pattern_convoy(params)  { HANDLERS.activate_pattern({ patternName: 'phantom_convoy', parameters: params }); },
@@ -230,8 +243,11 @@ const HANDLERS = {
 
 function seedDrones() {
   _state.set('drones', {
-    'DRONE-1': { position: { x: 0.35, y: 0.15 }, status: 'active', role: 'sync' },
-    'DRONE-2': { position: { x: 0.65, y: 0.12 }, status: 'active', role: 'sync' },
+    'DRONE-1': { position: { x: 0.25, y: 0.10 }, status: 'active', role: 'sync' },
+    'DRONE-2': { position: { x: 0.55, y: 0.08 }, status: 'active', role: 'sync' },
+    'DRONE-3': { position: { x: 0.80, y: 0.12 }, status: 'active', role: 'sync' },
+    'DRONE-4': { position: { x: 0.40, y: 0.20 }, status: 'active', role: 'decoy' },
+    'DRONE-5': { position: { x: 0.70, y: 0.18 }, status: 'active', role: 'decoy' },
   });
 }
 
