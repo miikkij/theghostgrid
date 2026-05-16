@@ -134,6 +134,12 @@ function advanceMessages() {
         final: true,
       });
 
+      state.emit('transmission.frame_transmitted', {
+        from: from.id,
+        to: to.id,
+        cycle: state.get('cycle.number'),
+      });
+
       toRemove.push(i);
     } else {
       var from2 = msg.route[msg.hopIndex - 1];
@@ -150,6 +156,12 @@ function advanceMessages() {
         isDroneHop: isDroneHop,
         isFiberHop: isFiberHop,
         final: false,
+      });
+
+      state.emit('transmission.frame_transmitted', {
+        from: from2.id,
+        to: to2.id,
+        cycle: state.get('cycle.number'),
       });
     }
   }
