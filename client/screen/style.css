@@ -490,9 +490,9 @@ body.cursor-visible {
 }
 
 .pitch-soldier {
-  width: 12vw;
-  min-width: 120px;
-  max-width: 220px;
+  width: 22vw;
+  min-width: 200px;
+  max-width: 400px;
   height: auto;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.6));
