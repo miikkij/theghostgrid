@@ -226,6 +226,22 @@ const HANDLERS = {
     log.info('SITREP requested — handled by phone_sim');
   },
 
+  run_full_pitch() {
+    log.info('Full pitch — handled by demo/script.js');
+  },
+
+  stop_pitch() {
+    log.info('Stop pitch — handled by demo/script.js');
+  },
+
+  pause_pitch() {
+    log.info('Pause pitch — handled by demo/script.js');
+  },
+
+  resume_pitch() {
+    log.info('Resume pitch — handled by demo/script.js');
+  },
+
   trigger_ai_adaptation() {
     _state.emit('ops.trigger_ai_adaptation', {});
     log.info('AI adaptation triggered');
