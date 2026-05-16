@@ -25,8 +25,9 @@ function init(state) {
 
 function buildSteps() {
   return [
-    // Minute 0: Sync beacon
+    // Minute 0: Sync beacon + initial SITREP
     { t: 0,   fn: () => { dispatch('resume_cycles', {}); broadcastStep('Sync beacon active — fiber-tethered drones provide time discipline'); }},
+    { t: 5,   fn: () => { dispatch('request_sitrep', {}); broadcastStep('Initial SITREP — all units reporting in'); }},
     { t: 10,  fn: () => { broadcastStep('All transmissions happen inside synchronized burst windows under drone cover'); }},
 
     // Minute 1: Burst protocol — bidirectional

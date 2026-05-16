@@ -100,7 +100,7 @@ function evaluatePhantomConvoy(params, position, cycleNumber) {
   const path = params.path;
   if (!path || path.length < 2) return false;
   const velocity = params.velocity || 0.015;
-  const convoyLength = params.convoy_length || 0.1;
+  const convoyLength = params.convoy_length || params.convoyLength || 0.3;
   const loop = params.loop !== false;
 
   const segments = [];
@@ -126,7 +126,7 @@ function evaluatePhantomConvoy(params, position, cycleNumber) {
   const headPoint = pointAlongPath(segments, totalLength, headDist);
   const tailPoint = pointAlongPath(segments, totalLength, tailDist);
 
-  return distanceToSegment(position, tailPoint, headPoint) < 0.03;
+  return distanceToSegment(position, tailPoint, headPoint) < 0.08;
 }
 
 function pointAlongPath(segments, totalLength, dist) {

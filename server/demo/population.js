@@ -108,6 +108,12 @@ function onBurst(_data) {
     const node = state.get(`nodes.${callsign}`);
     if (!node || !node.position || node.state === 'DEAD' || node.state === 'JAMMED') continue;
 
+    // Slow drift — soldiers move slightly each cycle (patrol movement)
+    var pos = node.position;
+    pos.x = clamp(pos.x + (Math.random() - 0.5) * 0.002, 0.08, 0.92);
+    pos.y = clamp(pos.y + (Math.random() - 0.5) * 0.002, 0.08, 0.85);
+    state.set(`nodes.${callsign}.position`, pos);
+
     // Find a nearby neighbor to communicate with
     const neighbors = [];
     for (const [id, n] of allNodes) {
