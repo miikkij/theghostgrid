@@ -272,6 +272,8 @@ body.cursor-visible {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   pointer-events: auto;
+  display: flex;
+  gap: 8px;
 }
 
 .sim-btn {
