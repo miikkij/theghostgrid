@@ -25,20 +25,34 @@ function init(state) {
 
 function buildSteps() {
   return [
-    { t: 0,   fn: () => { dispatch('resume_cycles', {}); broadcastStep('Cycles running, drones seeded'); }},
-    { t: 10,  fn: () => { broadcastStep('Sync beacon — watch the drone pulse'); }},
-    { t: 30,  fn: () => { broadcastStep('Burst protocol active — sub-50ms windows'); }},
+    // Minute 0: Sync beacon
+    { t: 0,   fn: () => { dispatch('resume_cycles', {}); broadcastStep('Sync beacon active — fiber-tethered drones provide time discipline'); }},
+    { t: 10,  fn: () => { broadcastStep('All transmissions happen inside synchronized burst windows under drone cover'); }},
+
+    // Minute 1: Burst protocol — bidirectional
+    { t: 30,  fn: () => { broadcastStep('Sub-50ms burst windows — soldiers emit when they have something to say, then go silent'); }},
+    { t: 45,  fn: () => { dispatch('request_sitrep', {}); broadcastStep('HQ requests SITREP — all units respond inside burst window'); }},
+
+    // Minute 2: Resilience under attack
     { t: 60,  fn: () => { dispatch('inject_jamming', { area: { center: { x: 0.55, y: 0.45 }, radius: 0.15 } }); broadcastStep('EW ATTACK — jamming injected sector 3'); }},
-    { t: 75,  fn: () => { dispatch('clear_jamming', {}); broadcastStep('Mesh reconverged — jamming cleared'); }},
-    { t: 90,  fn: () => { dispatch('drop_drone', { droneId: 'DRONE-2' }); broadcastStep('DRONE-2 lost — remaining drones take over'); }},
-    { t: 120, fn: () => { dispatch('activate_decoys', { count: 47 }); broadcastStep('47 decoy emitters deployed — EUR 25 each'); }},
-    { t: 135, fn: () => { dispatch('activate_pattern', { patternName: 'linear_translation', parameters: { velocity: 0.02, direction: 0, bandWidth: 0.15 } }); broadcastStep('Wave choreography — battalion moving east'); }},
+    { t: 75,  fn: () => { dispatch('clear_jamming', {}); broadcastStep('Mesh reconverged — routing adapts around dead zone'); }},
+    { t: 90,  fn: () => { dispatch('drop_drone', { droneId: 'DRONE-2' }); broadcastStep('DRONE-2 lost — remaining drones continue sync'); }},
+
+    // Minute 3: Deception capability
+    { t: 120, fn: () => { dispatch('activate_decoys', { count: 47 }); broadcastStep('47 decoy emitters deployed — EUR 25 each, indistinguishable from real soldiers'); }},
+    { t: 135, fn: () => { dispatch('activate_pattern', { patternName: 'linear_translation', parameters: { velocity: 0.02, direction: 0, bandWidth: 0.15 } }); broadcastStep('Wave choreography — looks like a battalion moving east'); }},
     { t: 150, fn: () => { dispatch('activate_pattern', { patternName: 'phantom_convoy', parameters: { velocity: 0.025, convoyLength: 0.2, path: [{ x: 0.2, y: 0.7 }, { x: 0.5, y: 0.5 }, { x: 0.8, y: 0.3 }] } }); broadcastStep('Phantom convoy — second deception axis'); }},
-    { t: 180, fn: () => { dispatch('trigger_honeypot', { eventType: 'artillery' }); broadcastStep('HONEYPOT TRIGGERED — artillery detection'); }},
-    { t: 195, fn: () => { dispatch('trigger_ai_adaptation', {}); broadcastStep('AI analyzing — choreography update recommended'); }},
-    { t: 240, fn: () => { _state.set('drones.DRONE-2', { position: { x: 0.65, y: 0.12 }, status: 'active', role: 'sync' }); broadcastStep('DRONE-2 restored — full redundancy'); }},
-    { t: 270, fn: () => { dispatch('reset_state', {}); dispatch('resume_cycles', {}); broadcastStep('Systems nominal — architecture proven'); }},
-    { t: 300, fn: () => { broadcastStep('PITCH COMPLETE — 5 minutes'); _running = false; log.info('===== FULL PITCH SEQUENCE COMPLETE ====='); }},
+
+    // Minute 4: Honeypot + AI
+    { t: 180, fn: () => { dispatch('trigger_honeypot', { eventType: 'artillery' }); broadcastStep('HONEYPOT — acoustic sensor detects artillery overpressure'); }},
+    { t: 185, fn: () => { broadcastStep('Alert broadcast to phones — 5 seconds from sensor to warning'); }},
+    { t: 195, fn: () => { dispatch('trigger_ai_adaptation', {}); broadcastStep('AI analyzes enemy reaction — recommends choreography update'); }},
+
+    // Minute 5: Recovery + close
+    { t: 240, fn: () => { _state.set('drones.DRONE-2', { position: { x: 0.65, y: 0.12 }, status: 'active', role: 'sync' }); broadcastStep('DRONE-2 restored — full sync redundancy'); }},
+    { t: 260, fn: () => { dispatch('request_sitrep', {}); broadcastStep('Final SITREP — all units report nominal'); }},
+    { t: 270, fn: () => { dispatch('reset_state', {}); dispatch('resume_cycles', {}); broadcastStep('Architecture proven — sync beacon anchors everything'); }},
+    { t: 300, fn: () => { broadcastStep('PITCH COMPLETE — the architecture is anchored in a sync beacon you cannot jam'); _running = false; log.info('===== FULL PITCH SEQUENCE COMPLETE ====='); }},
   ];
 }
 
