@@ -87,14 +87,12 @@ function spawnDecoys(count, area) {
     _sequences.set(nodeId, 0);
 
     if (_state) {
-      const nodes = _state.get('nodes') || {};
-      nodes[nodeId] = {
+      _state.set(`nodes.${nodeId}`, {
         type: 'decoy',
         position,
         state: NODE_STATES.LISTENING,
         lastSeen: Date.now(),
-      };
-      _state.set('nodes', nodes);
+      });
 
       _state.emit('deception.decoy_spawned', { nodeId, position, type: 'decoy' });
     }
@@ -123,14 +121,12 @@ function spawnHoneypot(position, sensors) {
   honeypot.registerHoneypot(nodeId, position, sensors);
 
   if (_state) {
-    const nodes = _state.get('nodes') || {};
-    nodes[nodeId] = {
+    _state.set(`nodes.${nodeId}`, {
       type: 'honeypot',
       position,
       state: NODE_STATES.LISTENING,
       lastSeen: Date.now(),
-    };
-    _state.set('nodes', nodes);
+    });
 
     _state.emit('deception.decoy_spawned', { nodeId, position, type: 'honeypot' });
   }
