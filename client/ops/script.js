@@ -116,15 +116,23 @@
     });
 
     // Pattern events — listen for both name variants
+    // Track pattern IDs to avoid duplicate additions from multiple event names
+    var knownPatternIds = {};
+
     function handlePatternActivated(data) {
+      var pid = data.patternId || data.id;
+      if (pid && knownPatternIds[pid]) return;
+      if (pid) knownPatternIds[pid] = true;
       state.active_patterns.push(data);
       renderActivePatterns();
       var trigger = patternNameToTrigger(data.patternName || data.name);
       if (trigger) Controls.setPatternActive(trigger, true);
     }
     function handlePatternDeactivated(data) {
+      var pid = data.patternId || data.id;
+      if (pid) delete knownPatternIds[pid];
       state.active_patterns = state.active_patterns.filter(function (p) {
-        return p.id !== data.id;
+        return (p.patternId || p.id) !== pid;
       });
       renderActivePatterns();
       var trigger = patternNameToTrigger(data.patternName || data.name);
@@ -132,7 +140,7 @@
     }
     sock.on('deception.pattern_activated', handlePatternActivated);
     sock.on('pattern_update', function (data) {
-      if (data.action === 'activated' || data.patternName) handlePatternActivated(data);
+      if (data.patternName && !data.action) handlePatternActivated(data);
       else if (data.action === 'deactivated') handlePatternDeactivated(data);
     });
     sock.on('deception.pattern_deactivated', handlePatternDeactivated);
