@@ -74,6 +74,19 @@ function initRouter() {
         broadcastEvent('node_join', nodeId + ' joined the mesh');
       }
     }
+
+    // Forward jamming zone changes to big screen and ops
+    if (path === 'jamming_zones') {
+      state.broadcastTo('screen', 'jamming_zones_update', value);
+      state.broadcastTo('ops', 'state_update', { jamming_zones: value });
+    }
+
+    // Forward drone changes to big screen and ops
+    if (path === 'drones' || path.startsWith('drones.')) {
+      const drones = path === 'drones' ? value : state.get('drones');
+      state.broadcastTo('screen', 'drones_update', drones);
+      state.broadcastTo('ops', 'state_update', { drones });
+    }
   });
 
   // Forward scenario triggers (logged and re-emitted for any listeners)

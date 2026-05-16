@@ -500,11 +500,25 @@ if (isMock) {
       state.jamming_zones = state.jamming_zones.filter(function(z) { return z.id !== data.id; });
     });
 
+    socket.on('jamming_zones_update', function(zones) {
+      state.jamming_zones = zones || [];
+    });
+
+    socket.on('drones_update', function(drones) {
+      state.drones = drones || {};
+    });
+
     socket.on('alert', function(alert) {
       state.active_alerts.push({ expires_at: Date.now() + 5000, nodeId: alert.nodeId, caption: alert.caption });
     });
 
     socket.on('ai.decision', function(decision) {
+      state.ai_reasoning = decision;
+      state.stats.ai_decisions++;
+      showAIReasoning(decision);
+    });
+
+    socket.on('ai_decision', function(decision) {
       state.ai_reasoning = decision;
       state.stats.ai_decisions++;
       showAIReasoning(decision);
