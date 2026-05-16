@@ -3,7 +3,7 @@
 const config = require('../config');
 const log = require('../log').child({ component: 'hq_brain.confidentialmind' });
 
-const USE_REASONING = process.env.CM_USE_REASONING === 'true';
+function useReasoning() { return process.env.CM_USE_REASONING === 'true'; }
 const MAX_TOKENS = parseInt(process.env.CM_MAX_TOKENS) || 4000;
 
 async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temperature }) {
@@ -26,7 +26,7 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
   };
 
   // Disable thinking mode unless explicitly enabled
-  if (!USE_REASONING) {
+  if (!useReasoning()) {
     body.chat_template_kwargs = { enable_thinking: false };
   }
 
@@ -35,7 +35,7 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
   }
 
   const controller = new AbortController();
-  const timeoutMs = parseInt(process.env.CM_TIMEOUT_MS) || (USE_REASONING ? 60000 : 15000);
+  const timeoutMs = parseInt(process.env.CM_TIMEOUT_MS) || (useReasoning() ? 60000 : 15000);
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
@@ -82,7 +82,7 @@ function extractResponse(msg) {
     if (cleaned.startsWith('{')) {
       try {
         var parsed = JSON.parse(cleaned);
-        if (USE_REASONING && reasoning) parsed.thinking = reasoning;
+        if (useReasoning() && reasoning) parsed.thinking = reasoning;
         return parsed;
       } catch { /* not valid after stripping */ }
     }
@@ -90,7 +90,7 @@ function extractResponse(msg) {
     // Direct parse
     try {
       var direct = JSON.parse(content.trim());
-      if (USE_REASONING && reasoning) direct.thinking = reasoning;
+      if (useReasoning() && reasoning) direct.thinking = reasoning;
       return direct;
     } catch { /* not raw JSON */ }
   }

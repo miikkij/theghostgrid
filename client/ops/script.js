@@ -170,6 +170,11 @@
       renderUnits();
     });
 
+    sock.on('cm_reasoning_changed', function (data) {
+      state._reasoningEnabled = data.enabled;
+      updateStatusBar();
+    });
+
     sock.on('connect', function () {
       state.connected = true;
       state.active_patterns = [];
@@ -266,21 +271,37 @@
     if (dom.drift) dom.drift.textContent = (state.stats.sync_drift_ms || 0) + 'ms';
     if (dom.aiStatus) {
       var backend = state.adapters.cm_backend;
-      var hasReasoning = state.ai_reasoning && state.ai_reasoning.thinking;
-      var suffix = hasReasoning ? ' (+reasoning)' : '';
-      if (backend === 'ollama') {
-        dom.aiStatus.textContent = 'Ollama' + suffix;
-        dom.aiStatus.style.color = 'var(--accent-green)';
-      } else if (backend === 'confidentialmind') {
-        dom.aiStatus.textContent = 'HQ.Brain' + suffix;
-        dom.aiStatus.style.color = 'var(--accent-green)';
-      } else if (state.adapters.cm === 'ok') {
-        dom.aiStatus.textContent = 'Active' + suffix;
-        dom.aiStatus.style.color = 'var(--accent-green)';
-      } else {
-        dom.aiStatus.textContent = 'Off';
-        dom.aiStatus.style.color = 'var(--text-muted)';
+      var label = 'Off';
+      var color = 'var(--text-muted)';
+      if (backend === 'ollama') { label = 'Ollama'; color = 'var(--accent-green)'; }
+      else if (backend === 'confidentialmind') { label = 'HQ.Brain'; color = 'var(--accent-green)'; }
+      else if (state.adapters.cm === 'ok') { label = 'Active'; color = 'var(--accent-green)'; }
+
+      // Reasoning toggle — only shown when reasoning was configured
+      var reasoningConfigured = state.ai_reasoning && state.ai_reasoning.thinking;
+      if (reasoningConfigured || state._reasoningConfigured) {
+        state._reasoningConfigured = true;
+        var reasoningOn = state._reasoningEnabled !== false;
+        var tag = document.getElementById('reasoning-toggle');
+        if (!tag) {
+          tag = document.createElement('span');
+          tag.id = 'reasoning-toggle';
+          tag.style.cursor = 'pointer';
+          tag.style.marginLeft = '4px';
+          tag.style.fontSize = '0.6875rem';
+          tag.addEventListener('click', function () {
+            state._reasoningEnabled = !(state._reasoningEnabled !== false);
+            if (socket) socket.emit('ops.set_reasoning', { enabled: state._reasoningEnabled });
+            updateStatusBar();
+          });
+          dom.aiStatus.parentNode.appendChild(tag);
+        }
+        tag.textContent = reasoningOn ? '(+reasoning)' : '(-reasoning)';
+        tag.style.color = reasoningOn ? 'var(--accent-cyan)' : 'var(--text-muted)';
       }
+
+      dom.aiStatus.textContent = label;
+      dom.aiStatus.style.color = color;
     }
   }
 
