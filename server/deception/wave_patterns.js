@@ -178,12 +178,14 @@ function activate({ patternName, parameters }) {
   }
 
   const patternId = `PAT-${_nextPatternId++}`;
-  _activePatterns.set(patternId, {
+  const entry = {
     id: patternId,
     name: patternName,
     parameters: { ...parameters },
     activatedAt: Date.now(),
-  });
+  };
+  _activePatterns.set(patternId, entry);
+  syncToState();
 
   if (_state) {
     _state.emit('deception.pattern_activated', {
@@ -197,11 +199,26 @@ function activate({ patternName, parameters }) {
 }
 
 function deactivate(patternId) {
+  const pattern = _activePatterns.get(patternId);
   const removed = _activePatterns.delete(patternId);
   if (removed && _state) {
-    _state.emit('deception.pattern_deactivated', { patternId });
+    _state.emit('deception.pattern_deactivated', {
+      patternId,
+      patternName: pattern ? pattern.name : null,
+    });
   }
+  syncToState();
   return removed;
+}
+
+function syncToState() {
+  if (!_state) return;
+  const list = [..._activePatterns.values()].map((p) => ({
+    id: p.id,
+    patternName: p.name,
+    parameters: p.parameters,
+  }));
+  _state.set('active_patterns', list);
 }
 
 // Union of all active patterns: transmit if ANY pattern says so

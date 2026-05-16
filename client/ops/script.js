@@ -188,6 +188,12 @@
     if (data.active_patterns) {
       state.active_patterns = data.active_patterns;
       renderActivePatterns();
+      // Restore button toggle states from server-side pattern list
+      Controls.resetPatterns();
+      for (var pi = 0; pi < data.active_patterns.length; pi++) {
+        var trigger = patternNameToTrigger(data.active_patterns[pi].patternName || data.active_patterns[pi].name);
+        if (trigger) Controls.setPatternActive(trigger, true);
+      }
     }
     // Restore event log from server buffer on reconnect
     if (data.recent_events && data.recent_events.length > 0) {
