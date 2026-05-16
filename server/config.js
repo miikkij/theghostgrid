@@ -32,6 +32,7 @@ module.exports = {
   },
   demo: {
     num_simulated_decoys: parseInt(process.env.NUM_SIMULATED_DECOYS) || 47,
+    num_simulated_soldiers: parseInt(process.env.NUM_SIMULATED_SOLDIERS) || 0,
     enable_haptic: process.env.ENABLE_HAPTIC !== 'false',
   },
 };

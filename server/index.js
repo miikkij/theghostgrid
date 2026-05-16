@@ -11,6 +11,7 @@ const { initPhoneSim } = require('./phone_sim');
 const { initHealthMonitor } = require('./health_monitor');
 const scenarios = require('./demo/scenarios');
 const demoScript = require('./demo/script');
+const population = require('./demo/population');
 const hqBrain = require('./hq_brain');
 const radioBridge = require('./radio_bridge');
 
@@ -116,6 +117,7 @@ server.listen(port, host, async () => {
   startCycleTicker();
   initHealthMonitor();
   radioBridge.init();
+  population.init();
 
   // Init HQ Brain (async — selects LLM backend)
   try {
