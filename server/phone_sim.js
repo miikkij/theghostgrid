@@ -200,41 +200,43 @@ function initPhoneSim() {
     meshViz.injectMessage(data.callsign, data.msgType);
   });
 
-  // HQ info request — triggers ALL soldiers AND decoys to TX
-  // Decoys must also respond to SITREP so enemy can't distinguish who answers
-  state.on('ops.trigger_scenario', (data) => {
-    if (data.scenario === 'request_sitrep') {
-      var allNodes = Object.entries(state.get('nodes') || {}).filter(([, n]) => n.state !== 'DEAD');
-      var soldiers = allNodes.filter(([, n]) => n.type === 'soldier');
-      var decoys = allNodes.filter(([, n]) => n.type === 'decoy' || n.type === 'honeypot');
+  // SITREP execution — shared logic
+  function executeSitrep() {
+    var allNodes = Object.entries(state.get('nodes') || {}).filter(([, n]) => n.state !== 'DEAD');
+    var soldiers = allNodes.filter(([, n]) => n.type === 'soldier');
+    var decoys = allNodes.filter(([, n]) => n.type === 'decoy' || n.type === 'honeypot');
 
-      // Notify phones about HQ request
-      state.broadcastTo('phone', 'phone.hq_request', {
-        type: 'SITREP',
-        ts: Date.now(),
-        message: 'HQ requests status report from all units',
-      });
+    state.broadcastTo('phone', 'phone.hq_request', {
+      type: 'SITREP',
+      ts: Date.now(),
+      message: 'HQ requests status report from all units',
+    });
 
-      // Soldiers report real data to HQ
-      for (var [callsign, nodeData] of soldiers) {
-        forcedTx.add(callsign);
-        state.set(`nodes.${callsign}.state`, 'TX');
-        state.broadcastTo('phone', 'node_state_change', { callsign, state: 'TX' });
-        updateUnitRecord(callsign, nodeData, 'STATUS');
-        meshViz.injectMessage(callsign, 'STATUS');
-      }
-
-      // Decoys also TX — indistinguishable from real soldiers to enemy SIGINT
-      for (var [decoyId, decoyData] of decoys) {
-        if (decoyData.position) {
-          state.set(`nodes.${decoyId}.state`, 'TX');
-          meshViz.injectMessage(decoyId, 'STATUS');
-        }
-      }
-
-      log.info({ soldiers: soldiers.length, decoys: decoys.length }, 'SITREP — all nodes responding (soldiers + decoys)');
+    for (var [callsign, nodeData] of soldiers) {
+      forcedTx.add(callsign);
+      state.set(`nodes.${callsign}.state`, 'TX');
+      state.broadcastTo('phone', 'node_state_change', { callsign, state: 'TX' });
+      updateUnitRecord(callsign, nodeData, 'STATUS');
+      meshViz.injectMessage(callsign, 'STATUS');
     }
+
+    for (var [decoyId, decoyData] of decoys) {
+      if (decoyData.position) {
+        state.set(`nodes.${decoyId}.state`, 'TX');
+        meshViz.injectMessage(decoyId, 'STATUS');
+      }
+    }
+
+    log.info({ soldiers: soldiers.length, decoys: decoys.length }, 'SITREP — all nodes responding');
+  }
+
+  // Triggered from ops button
+  state.on('ops.trigger_scenario', (data) => {
+    if (data.scenario === 'request_sitrep') executeSitrep();
   });
+
+  // Triggered from pitch script via scenarios.js
+  state.on('sitrep.execute', () => { executeSitrep(); });
 
   log.info('phone simulation initialized');
 }

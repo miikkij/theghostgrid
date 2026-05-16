@@ -229,7 +229,7 @@ const HANDLERS = {
   },
 
   request_sitrep() {
-    log.info('SITREP requested — handled by phone_sim');
+    _state.emit('sitrep.execute', {});
   },
 
   run_full_pitch() {

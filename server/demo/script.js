@@ -25,9 +25,10 @@ function init(state) {
 
 function buildSteps() {
   return [
-    // Minute 0: Sync beacon — the architectural anchor
-    { t: 0,   fn: () => { dispatch('resume_cycles', {}); broadcastStep('Sync beacon active — fiber-tethered drones provide time discipline'); }},
-    { t: 8,   fn: () => { broadcastStep('GPS jammed? Doesn\'t matter. The drone on fiber replaces GPS with a local sync pulse no jammer can reach'); }},
+    // Minute 0: Sync beacon — the architectural anchor (3s pause after countdown)
+    { t: 0,   fn: () => { dispatch('resume_cycles', {}); }},
+    { t: 3,   fn: () => { broadcastStep('Sync beacon active — fiber-tethered drones provide time discipline'); }},
+    { t: 11,  fn: () => { broadcastStep('GPS jammed? Doesn\'t matter. The drone on fiber replaces GPS with a local sync pulse no jammer can reach'); }},
     { t: 18,  fn: () => { broadcastStep('Position data flows to HQ inside the sync pulse — drone fiber replaces GPS for the entire mesh'); }},
     { t: 25,  fn: () => { dispatch('request_sitrep', {}); broadcastStep('Initial SITREP — all units report position to HQ via drone mesh relay'); }},
 
