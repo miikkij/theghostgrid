@@ -702,6 +702,78 @@
     });
   });
 
+  // --- Simulation controls ---
+
+  function initSimControls() {
+    var movementCb = document.getElementById('sim-movement');
+    var txCb = document.getElementById('sim-tx');
+    var jammingCb = document.getElementById('sim-jamming');
+    var txRateSlider = document.getElementById('sim-tx-rate');
+    var speedSlider = document.getElementById('sim-speed');
+    var jamSlider = document.getElementById('sim-jam-interval');
+    var txRateVal = document.getElementById('sim-tx-rate-val');
+    var speedVal = document.getElementById('sim-speed-val');
+    var jamVal = document.getElementById('sim-jam-val');
+    var countEl = document.getElementById('sim-count');
+
+    function sendSettings() {
+      if (!socket) return;
+      socket.emit('ops.population_settings', {
+        movementEnabled: movementCb ? movementCb.checked : false,
+        txEnabled: txCb ? txCb.checked : false,
+        jammingEnabled: jammingCb ? jammingCb.checked : false,
+        txRate: txRateSlider ? parseInt(txRateSlider.value) / 100 : 0.15,
+        movementSpeed: speedSlider ? parseInt(speedSlider.value) / 1000 : 0.002,
+        jammingInterval: jamSlider ? parseInt(jamSlider.value) : 40,
+      });
+    }
+
+    if (movementCb) movementCb.addEventListener('change', sendSettings);
+    if (txCb) txCb.addEventListener('change', sendSettings);
+    if (jammingCb) jammingCb.addEventListener('change', sendSettings);
+
+    if (txRateSlider) txRateSlider.addEventListener('input', function () {
+      if (txRateVal) txRateVal.textContent = txRateSlider.value + '%';
+      sendSettings();
+    });
+    if (speedSlider) speedSlider.addEventListener('input', function () {
+      if (speedVal) speedVal.textContent = speedSlider.value;
+      sendSettings();
+    });
+    if (jamSlider) jamSlider.addEventListener('input', function () {
+      if (jamVal) jamVal.textContent = jamSlider.value;
+      sendSettings();
+    });
+
+    // Restore from server state
+    if (socket) {
+      socket.on('state_update', function (data) {
+        if (data.population_settings) restoreSimSettings(data.population_settings);
+      });
+    }
+
+    // Count virtual soldiers
+    function updateCount() {
+      var c = 0;
+      for (var id in state.nodes) {
+        if (state.nodes[id].virtual) c++;
+      }
+      if (countEl) countEl.textContent = c;
+    }
+    setInterval(updateCount, 2000);
+
+    function restoreSimSettings(s) {
+      if (movementCb) movementCb.checked = s.movementEnabled || false;
+      if (txCb) txCb.checked = s.txEnabled || false;
+      if (jammingCb) jammingCb.checked = s.jammingEnabled || false;
+      if (txRateSlider) { txRateSlider.value = Math.round((s.txRate || 0.15) * 100); if (txRateVal) txRateVal.textContent = txRateSlider.value + '%'; }
+      if (speedSlider) { speedSlider.value = Math.round((s.movementSpeed || 0.002) * 1000); if (speedVal) speedVal.textContent = speedSlider.value; }
+      if (jamSlider) { jamSlider.value = s.jammingInterval || 40; if (jamVal) jamVal.textContent = jamSlider.value; }
+    }
+  }
+
+  initSimControls();
+
   function hasDecoys() {
     for (var id in state.nodes) {
       var t = state.nodes[id].type;
@@ -789,6 +861,17 @@
         + '<p><strong>Last Msg</strong> — the type of their last transmission: POS (position), STATUS (report), ACK (acknowledge), CONTACT, CASEVAC, FIRE (fire mission), RELAY.</p>'
         + '<p><strong>Battery / Ammo</strong> — current equipment levels. Decrease over time as the unit operates.</p>'
         + '<p><strong>Important:</strong> HQ only knows what soldiers report. Positions on the ops minimap reflect the <em>last reported</em> position, not ground truth. Press 📋 Request SITREP to force all units to transmit current status.</p>'
+    },
+    simulation: {
+      title: 'Virtual Soldier Simulation',
+      body: '<p>Controls for the simulated soldier population. Virtual soldiers are spawned on server start (configured by NUM_SIMULATED_SOLDIERS in .env).</p>'
+        + '<p><strong>Movement</strong> — enables slow patrol drift. Soldiers move slightly each cycle, simulating patrol movement. Visible on big screen; ops only sees position changes after SITREP.</p>'
+        + '<p><strong>TX arcs</strong> — enables transmission arc visualization on the big screen. Soldiers generate burst transmissions to nearby neighbors at the configured rate.</p>'
+        + '<p><strong>Ambient jamming</strong> — randomly jams one virtual soldier periodically. They recover automatically after 3-5 seconds.</p>'
+        + '<p><strong>TX rate</strong> — percentage of soldiers that transmit each cycle (0-100%). Lower = more realistic, higher = more visual activity.</p>'
+        + '<p><strong>Move speed</strong> — how fast soldiers drift (0-10). Higher = faster patrol movement.</p>'
+        + '<p><strong>Jamming interval</strong> — cycles between ambient jamming events.</p>'
+        + '<p>All settings take effect immediately. By default everything is off — the big screen stays clean until you activate simulation features.</p>'
     },
     ai_reasoning: {
       title: 'AI Reasoning Panel',

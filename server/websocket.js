@@ -91,6 +91,10 @@ function attachWebSocket(httpServer) {
       state.emit('ops.trigger_scenario', data);
     });
 
+    socket.on('ops.population_settings', (data) => {
+      state.emit('population.settings', data);
+    });
+
     socket.on('ops.set_reasoning', (data) => {
       if (typeof data.enabled === 'boolean') {
         process.env.CM_USE_REASONING = data.enabled ? 'true' : 'false';

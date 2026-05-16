@@ -120,12 +120,41 @@
         <div class="tab-bar">
           <button class="tab-btn active" data-tab="events">EVENT LOG <span class="help-btn" data-help="event_log">?</span></button>
           <button class="tab-btn" data-tab="units">UNITS <span class="help-btn" data-help="units">?</span></button>
+          <button class="tab-btn" data-tab="sim">SIMULATION <span class="help-btn" data-help="simulation">?</span></button>
         </div>
         <div class="tab-content active" id="tab-events">
           <div class="event-log-content"></div>
         </div>
         <div class="tab-content" id="tab-units">
           <div class="units-content"></div>
+        </div>
+        <div class="tab-content" id="tab-sim">
+          <div class="sim-controls-content">
+            <div class="sim-toggle-row">
+              <label><input type="checkbox" id="sim-movement"> Movement (patrol drift)</label>
+            </div>
+            <div class="sim-toggle-row">
+              <label><input type="checkbox" id="sim-tx"> TX arcs (burst transmissions)</label>
+            </div>
+            <div class="sim-toggle-row">
+              <label><input type="checkbox" id="sim-jamming"> Ambient jamming</label>
+            </div>
+            <div class="sim-range-row">
+              <label>TX rate <span id="sim-tx-rate-val">15%</span></label>
+              <input type="range" id="sim-tx-rate" min="0" max="100" value="15">
+            </div>
+            <div class="sim-range-row">
+              <label>Move speed <span id="sim-speed-val">2</span></label>
+              <input type="range" id="sim-speed" min="0" max="10" value="2">
+            </div>
+            <div class="sim-range-row">
+              <label>Jamming interval <span id="sim-jam-val">40</span> cycles</label>
+              <input type="range" id="sim-jam-interval" min="5" max="100" value="40">
+            </div>
+            <div class="sim-info">
+              <span id="sim-count">0</span> virtual soldiers
+            </div>
+          </div>
         </div>
       </div>
     </section>
