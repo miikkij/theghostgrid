@@ -3,6 +3,7 @@
 const { state } = require('../state');
 const config = require('../config');
 const log = require('../log').child({ component: 'population' });
+const meshViz = require('../mesh_visualizer');
 
 const NATO = [
   'ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT',
@@ -132,12 +133,10 @@ function onBurst() {
       }
 
       if (neighbors.length > 0) {
-        const partner = neighbors[Math.floor(Math.random() * neighbors.length)];
-        state.emit('transmission.frame_transmitted', {
-          from: callsign,
-          to: partner,
-          cycle: state.get('cycle.number'),
-        });
+        // Inject into mesh visualizer for hop-by-hop routing
+        var msgTypes = ['POS', 'STATUS', 'ACK', 'RELAY'];
+        var msgType = msgTypes[Math.floor(Math.random() * msgTypes.length)];
+        meshViz.injectMessage(callsign, msgType);
       }
     }
   }
