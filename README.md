@@ -7,7 +7,7 @@ Drone-coordinated resilient tactical mesh communications — proof of concept.
 ```bash
 npm install
 cp .env.example .env    # edit as needed
-npm start               # http://localhost:3000
+npm start               # http://localhost:7620
 ```
 
 ## Routes

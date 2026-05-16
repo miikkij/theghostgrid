@@ -4,7 +4,7 @@ require('dotenv').config();
 
 module.exports = {
   server: {
-    port: parseInt(process.env.PORT) || 3000,
+    port: parseInt(process.env.PORT) || 7620,
     host: process.env.HOST || '0.0.0.0',
   },
   log: {

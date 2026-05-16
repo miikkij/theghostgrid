@@ -8,7 +8,7 @@ Canvas-based real-time visualization of the tactical mesh. This is the main visu
 
 ```bash
 npm run dev          # starts the server
-# open http://localhost:3000/screen
+# open http://localhost:7620/screen
 ```
 
 ### Simulation mode
