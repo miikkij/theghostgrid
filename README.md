@@ -25,6 +25,17 @@ npm start               # http://localhost:7620
 npm run dev   # starts with --watch for auto-reload
 ```
 
+## Radio Bridge (Rust)
+
+```bash
+cd radios
+cargo build --release
+cargo test
+cargo run -- --simulate     # no hardware required
+```
+
+See [`radios/README.md`](radios/README.md) for USB WiFi adapter setup and server integration.
+
 ## Testing
 
 ```bash
