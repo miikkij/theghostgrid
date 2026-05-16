@@ -105,10 +105,16 @@ function updateOverlays() {
     overlayRefs.decoys.textContent = nodeValues.filter(function(n) { return n.type === 'decoy'; }).length;
   }
   if (overlayRefs.aiStatus) {
-    var aiText = state.ai_reasoning ? 'ACTIVE' : 'STANDBY';
-    overlayRefs.aiStatus.textContent = aiText;
-    overlayRefs.aiStatus.style.color = state.ai_reasoning
-      ? 'var(--accent-green)' : 'var(--text-muted)';
+    if (state.ai_reasoning && state.ai_reasoning.classification === 'llm_unavailable') {
+      overlayRefs.aiStatus.textContent = 'DEGRADED';
+      overlayRefs.aiStatus.style.color = 'var(--accent-amber)';
+    } else if (state.ai_reasoning) {
+      overlayRefs.aiStatus.textContent = 'ACTIVE';
+      overlayRefs.aiStatus.style.color = 'var(--accent-green)';
+    } else {
+      overlayRefs.aiStatus.textContent = 'STANDBY';
+      overlayRefs.aiStatus.style.color = 'var(--text-muted)';
+    }
   }
 }
 
