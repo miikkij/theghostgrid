@@ -490,7 +490,9 @@ body.cursor-visible {
 }
 
 .pitch-soldier {
-  width: 140px;
+  width: 12vw;
+  min-width: 120px;
+  max-width: 220px;
   height: auto;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.6));
@@ -498,7 +500,7 @@ body.cursor-visible {
 
 .pitch-speech {
   font-family: var(--font-sans);
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 1.8vw, 2rem);
   font-weight: 500;
   color: var(--text-bright);
   background: rgba(10, 14, 26, 0.85);
@@ -506,11 +508,11 @@ body.cursor-visible {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(34, 211, 238, 0.4);
   border-radius: 12px;
-  padding: 16px 24px;
-  max-width: 550px;
-  line-height: 1.5;
+  padding: clamp(12px, 1.5vw, 28px) clamp(16px, 2vw, 36px);
+  max-width: clamp(400px, 40vw, 700px);
+  line-height: 1.45;
   letter-spacing: 0.01em;
-  margin-bottom: 40px;
+  margin-bottom: 5vh;
   margin-right: -10px;
   position: relative;
 }
