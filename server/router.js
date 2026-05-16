@@ -63,7 +63,17 @@ function initRouter() {
         Object.assign(payload, value);
       }
       state.broadcastTo('screen', 'node_state_change', payload);
-      state.broadcastTo('ops', 'node_state_change', payload);
+
+      // Ops gets fog-of-war: strip real-time position for soldiers
+      // HQ only learns position when soldier explicitly reports (via unit_update)
+      const nodeData = state.get(`nodes.${nodeId}`);
+      if (nodeData && nodeData.type === 'soldier' && (field === 'position' || field === '')) {
+        const opsPayload = { ...payload };
+        delete opsPayload.position;
+        state.broadcastTo('ops', 'node_state_change', opsPayload);
+      } else {
+        state.broadcastTo('ops', 'node_state_change', payload);
+      }
 
       if (field === 'state') {
         state.broadcastTo('phone', 'node_state_change', { callsign: nodeId, state: value });
