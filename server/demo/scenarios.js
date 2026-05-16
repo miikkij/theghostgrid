@@ -222,6 +222,10 @@ const HANDLERS = {
     log.info('state reset');
   },
 
+  request_sitrep() {
+    log.info('SITREP requested — handled by phone_sim');
+  },
+
   trigger_ai_adaptation() {
     _state.emit('ops.trigger_ai_adaptation', {});
     log.info('AI adaptation triggered');
