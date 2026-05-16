@@ -14,6 +14,8 @@ const demoScript = require('./demo/script');
 const population = require('./demo/population');
 const hqBrain = require('./hq_brain');
 const radioBridge = require('./radio_bridge');
+const transmission = require('./protocol/transmission');
+const mesh = require('./protocol/mesh');
 
 // --- Cycle ticker ---
 // Fires four phase events per cycle using chained setTimeout to avoid drift.
@@ -105,6 +107,8 @@ const app = createApp();
 const server = http.createServer(app);
 attachWebSocket(server);
 initRouter();
+transmission.init(state);
+mesh.init(state);
 initPhoneSim();
 scenarios.init(state, cycleTicker);
 demoScript.init(state);
