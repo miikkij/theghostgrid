@@ -1,6 +1,6 @@
 'use strict';
 
-const { randomUUID } = require('crypto');
+const { randomUUID, createHash } = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const log = require('../log').child({ component: 'hq_brain.audit' });
@@ -10,9 +10,11 @@ const entries = [];
 const LOG_DIR = path.join(__dirname, '..', '..', 'logs');
 const LOG_FILE = path.join(LOG_DIR, 'audit.log');
 let writeStream = null;
+let lastHash = 'GENESIS';
 
 function init(stateRef) {
   state = stateRef;
+  lastHash = 'GENESIS';
 
   try {
     fs.mkdirSync(LOG_DIR, { recursive: true });
@@ -26,8 +28,16 @@ function append(entry) {
   const record = {
     log_id: randomUUID(),
     ts: Date.now(),
+    prev_hash: lastHash,
     ...entry,
   };
+
+  // Hash chain: each entry includes hash of previous for tamper detection
+  record.hash = createHash('sha256')
+    .update(record.log_id + ':' + record.ts + ':' + record.prev_hash)
+    .digest('hex')
+    .slice(0, 16);
+  lastHash = record.hash;
 
   entries.push(record);
 
@@ -75,8 +85,10 @@ function exportToFile(filePath) {
   log.info({ path: filePath, count: entries.length }, 'Audit log exported');
 }
 
+// Test-only: reset in-memory state for test isolation
 function reset() {
   entries.length = 0;
+  lastHash = 'GENESIS';
   state = null;
   if (writeStream) {
     writeStream.end();

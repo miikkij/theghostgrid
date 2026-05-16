@@ -285,8 +285,9 @@ function testMesh() {
   assert(nextHop === 'N2', `N1 → N5 routine routes via N2: got ${nextHop}`);
 
   // Urgent routing: N1 → N5 should also produce a next-hop
-  const urgentHop = mesh.routePacket({ src: 'N1', dst: 'N5', mode: 'urgent' });
-  assert(urgentHop === 'N2', `N1 → N5 urgent routes via N2: got ${urgentHop}`);
+  const urgentHops = mesh.routePacket({ src: 'N1', dst: 'N5', mode: 'urgent' });
+  const urgentArr = Array.isArray(urgentHops) ? urgentHops : [urgentHops];
+  assert(urgentArr.includes('N2'), `N1 → N5 urgent flood includes N2: got [${urgentArr}]`);
 
   // Full hop path from N1 to N5
   const path = [];

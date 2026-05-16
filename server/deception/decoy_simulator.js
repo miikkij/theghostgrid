@@ -178,11 +178,22 @@ function composeDecoyFrame(decoy, cycleNumber) {
 
   const payload = fakeData.generatePayload(decoy.nodeId, cycleNumber);
 
+  // Statistical equivalence: vary routing class and destination to match real traffic patterns
+  const classWeights = ['routine', 'routine', 'routine', 'cover', 'cover', 'urgent'];
+  const msgClass = classWeights[Math.floor(Math.random() * classWeights.length)];
+
+  // Pick a plausible destination from known nodes or use BROADCAST
+  const allNodes = _state ? Object.keys(_state.get('nodes') || {}) : [];
+  const candidates = allNodes.filter((id) => id !== decoy.nodeId);
+  const dst = candidates.length > 0
+    ? candidates[Math.floor(Math.random() * candidates.length)]
+    : 'BROADCAST';
+
   const meshPayload = {
     src: decoy.nodeId,
-    dst: 'BROADCAST',
-    ttl: 3,
-    class: 'cover',
+    dst,
+    ttl: 3 + Math.floor(Math.random() * 3),
+    class: msgClass,
     sequence: seq,
     app: payload,
   };

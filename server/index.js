@@ -12,6 +12,7 @@ const { initHealthMonitor } = require('./health_monitor');
 const scenarios = require('./demo/scenarios');
 const demoScript = require('./demo/script');
 const hqBrain = require('./hq_brain');
+const radioBridge = require('./radio_bridge');
 
 // --- Cycle ticker ---
 // Fires four phase events per cycle using chained setTimeout to avoid drift.
@@ -114,6 +115,7 @@ server.listen(port, host, async () => {
 
   startCycleTicker();
   initHealthMonitor();
+  radioBridge.init();
 
   // Init HQ Brain (async — selects LLM backend)
   try {
@@ -137,6 +139,7 @@ server.listen(port, host, async () => {
 function shutdown(signal) {
   log.info({ signal }, 'shutting down');
   stopCycleTicker();
+  radioBridge.shutdown();
   server.close(() => {
     log.info('server closed');
     process.exit(0);

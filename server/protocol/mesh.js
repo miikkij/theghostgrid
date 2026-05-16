@@ -118,8 +118,8 @@ function floodRoute(src, dst) {
     if (drone) return drone.nodeId;
   }
 
-  neighbors.sort((a, b) => b.signalQuality - a.signalQuality);
-  return neighbors[0].nodeId;
+  // True flood: return ALL neighbors (caller retransmits to each)
+  return neighbors.map((n) => n.nodeId);
 }
 
 function dvRoute(src, dst) {

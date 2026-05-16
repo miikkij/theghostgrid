@@ -215,6 +215,20 @@ footer p {
   margin: 0;
 }
 
+.footer-links {
+  margin-top: var(--space-2);
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 150ms;
+}
+
+.footer-links a:hover {
+  color: var(--accent-cyan);
+}
+
 /* --- Responsive --- */
 
 @media (max-width: 900px) {

@@ -3,6 +3,7 @@
 const log = require('../log').child({ component: 'hq_brain.tactical' });
 const { TACTICAL_LOOP_PROMPT } = require('./prompts');
 const audit = require('./audit');
+const roe = require('./roe');
 
 let state = null;
 let llmClient = null;
@@ -175,7 +176,7 @@ function normalizeResponse(raw) {
   if (confidence < 0.5 && urgency === 'HIGH') urgency = 'MEDIUM';
   if (confidence < 0.3 && urgency === 'MEDIUM') urgency = 'LOW';
 
-  return {
+  const decision = {
     urgency,
     classification: raw.classification || 'unknown',
     affected_area: raw.affected_area || { center: { x: 0.5, y: 0.5 }, radius: 0.1 },
@@ -183,6 +184,9 @@ function normalizeResponse(raw) {
     reasoning: raw.reasoning || 'No reasoning provided',
     confidence,
   };
+
+  // Enforce ROE constraints
+  return roe.enforce(decision);
 }
 
 function getQueueDepth() {

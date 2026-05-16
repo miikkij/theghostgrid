@@ -150,12 +150,14 @@
       state.connected = true;
       updateSystemState('ACTIVE', 'connected');
       hideBanner();
+      setControlsEnabled(true);
     });
 
     sock.on('disconnect', function () {
       state.connected = false;
       updateSystemState('DISCONNECTED', 'error');
       showBanner();
+      setControlsEnabled(false);
     });
 
     sock.on('reconnect', function () {
@@ -496,6 +498,13 @@
 
   function hideBanner() {
     if (dom.banner) dom.banner.classList.remove('visible');
+  }
+
+  function setControlsEnabled(enabled) {
+    var buttons = document.querySelectorAll('#controls button[data-trigger]');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].disabled = !enabled;
+    }
   }
 
   // --- Utilities ---
