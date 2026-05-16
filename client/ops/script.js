@@ -758,6 +758,27 @@
         + '<p><strong>Stop Pitch</strong> — Aborts the pitch sequence entirely. All pending steps are cancelled.</p>'
         + '<p>Each pitch step is logged in the Event Log with a [PITCH] prefix so you can track progress.</p>'
     },
+    event_log: {
+      title: 'Event Log',
+      body: '<p>Real-time feed of system events, newest first. Events are color-coded by severity:</p>'
+        + '<p><strong style="color:#4ADE80">● Green</strong> — routine events (node joins, routing convergence, scenario triggers)</p>'
+        + '<p><strong style="color:#FBBF24">● Amber</strong> — warnings (jamming detected, degraded adapters)</p>'
+        + '<p><strong style="color:#EF4444">● Red</strong> — critical alerts (honeypot triggered, JAMMED nodes, artillery detection)</p>'
+        + '<p><strong style="color:#22D3EE">● Cyan</strong> — AI events (decisions rendered, adaptation triggered)</p>'
+        + '<p>Events persist across page refresh — the server keeps the last 50 events and sends them on reconnect.</p>'
+        + '<p>The [PITCH] prefix marks events from the automated demo sequence.</p>'
+    },
+    units: {
+      title: 'Unit Status Board',
+      body: '<p>Shows all soldiers that have reported in via the mesh network. Data updates when a soldier transmits.</p>'
+        + '<p><strong>Callsign</strong> — the soldier\'s NATO phonetic identifier (e.g. ALPHA-100).</p>'
+        + '<p><strong>Rank</strong> — PVT, CPL, SGT, LT, 1LT, CPT.</p>'
+        + '<p><strong>Role</strong> — RECON, OPS, COMMS, MEDIC, ENGINEER, SNIPER.</p>'
+        + '<p><strong>Status</strong> — <span style="color:#4ADE80">NOMINAL</span> (operating normally), <span style="color:#EF4444">CONTACT</span> (enemy engagement), <span style="color:#FBBF24">CASEVAC</span> (casualty evacuation).</p>'
+        + '<p><strong>Last Msg</strong> — the type of their last transmission: POS (position), STATUS (report), ACK (acknowledge), CONTACT, CASEVAC, FIRE (fire mission), RELAY.</p>'
+        + '<p><strong>Battery / Ammo</strong> — current equipment levels. Decrease over time as the unit operates.</p>'
+        + '<p><strong>Important:</strong> HQ only knows what soldiers report. Positions on the ops minimap reflect the <em>last reported</em> position, not ground truth. Press 📋 Request SITREP to force all units to transmit current status.</p>'
+    },
     ai_reasoning: {
       title: 'AI Reasoning Panel',
       body: '<p>Shows the last AI decision from the HQ Brain tactical or operational loop.</p>'
