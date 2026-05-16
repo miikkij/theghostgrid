@@ -35,7 +35,7 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
   }
 
   const controller = new AbortController();
-  const timeoutMs = parseInt(process.env.CM_TIMEOUT_MS) || 15000;
+  const timeoutMs = parseInt(process.env.CM_TIMEOUT_MS) || (USE_REASONING ? 60000 : 15000);
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
@@ -56,6 +56,15 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
 
     const data = await res.json();
     const msg = data.choices?.[0]?.message;
+    const finishReason = data.choices?.[0]?.finish_reason;
+
+    log.debug({
+      hasContent: !!msg?.content,
+      hasReasoning: !!(msg?.reasoning || msg?.reasoning_content || msg?.thinking),
+      contentLen: msg?.content?.length || 0,
+      reasoningLen: (msg?.reasoning || msg?.reasoning_content || msg?.thinking || '').length,
+      finishReason,
+    }, 'LLM response fields');
 
     return extractResponse(msg);
   } finally {
@@ -91,16 +100,37 @@ function extractResponse(msg) {
     }
   }
 
-  // Last resort: construct from whatever text we have
+  // Last resort: construct from whatever text we have, preserving full output
   var bestText = reasoning || content;
   if (bestText) {
-    log.warn('Could not parse JSON from LLM response, constructing from text');
+    log.warn({ textLen: bestText.length }, 'Could not parse JSON — extracting fields from text');
+
+    // Try to extract individual fields from the reasoning text
+    var urgency = 'MEDIUM';
+    var classification = 'ai_analysis';
+    var confidence = 0.6;
+    var broadcastContent = null;
+
+    var urgMatch = bestText.match(/urgency["\s:]+["']?(HIGH|MEDIUM|LOW)/i);
+    if (urgMatch) urgency = urgMatch[1].toUpperCase();
+
+    var classMatch = bestText.match(/classification["\s:]+["']?([a-z_]+)/i);
+    if (classMatch) classification = classMatch[1];
+
+    var confMatch = bestText.match(/confidence["\s:]+(\d+\.?\d*)/i);
+    if (confMatch) confidence = parseFloat(confMatch[1]);
+    if (confidence > 1) confidence = confidence / 100;
+
+    var broadcastMatch = bestText.match(/broadcast_content["\s:]+["']([^"']+)/i);
+    if (broadcastMatch) broadcastContent = broadcastMatch[1];
+
     return {
-      urgency: 'MEDIUM',
-      classification: 'ai_analysis',
-      confidence: 0.6,
-      reasoning: bestText.slice(-800),
-      broadcast_content: null,
+      urgency,
+      classification,
+      confidence: Math.max(0, Math.min(1, confidence)),
+      reasoning: bestText,
+      broadcast_content: broadcastContent,
+      affected_area: { center: { x: 0.5, y: 0.5 }, radius: 0.15 },
     };
   }
 
