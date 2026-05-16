@@ -124,7 +124,8 @@ async function processEvent(event) {
 
   state.emit('ai.decision', {
     loop: 'tactical',
-    decision,
+    ...decision,
+    summary: decision.classification + ' — ' + decision.urgency,
     event_type: event.event_type,
     elapsed_ms: Date.now() - startMs,
     log_id: auditEntry.log_id,

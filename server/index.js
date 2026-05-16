@@ -125,7 +125,7 @@ server.listen(port, host, async () => {
     await hqBrain.init(state);
     log.info('HQ Brain initialized');
   } catch (err) {
-    log.warn({ err: err.message }, 'HQ Brain init failed — running without AI');
+    log.error({ err: err.message, stack: err.stack }, 'HQ Brain init failed — running without AI');
   }
 
   // Seed initial drones — 3 sync + 2 decoy

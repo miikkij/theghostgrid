@@ -304,23 +304,29 @@
       dom.aiContent.innerHTML = '<div class="ai-no-data">No recent AI decisions</div>';
     } else {
       var d = state.ai_reasoning;
-      var conf = d.confidence || 0;
-      var confClass = conf >= 0.7 ? 'high' : (conf >= 0.4 ? 'medium' : 'low');
+      var conf = typeof d.confidence === 'number' ? d.confidence : 0;
+      var isDegraded = conf === 0 && d.classification === 'llm_unavailable';
+      var confLabel = isDegraded ? 'N/A' : (conf * 100).toFixed(0) + '%';
+      var confClass = isDegraded ? 'low' : (conf >= 0.7 ? 'high' : (conf >= 0.4 ? 'medium' : 'low'));
 
       var html = '<div class="ai-decision">'
         + '<div class="ai-decision-header">'
         + '<span class="ai-decision-ts">' + formatTime(d.ts || Date.now()) + '</span>'
-        + '<span class="ai-confidence ' + confClass + '">' + (conf * 100).toFixed(0) + '%</span>'
+        + '<span class="ai-confidence ' + confClass + '">' + confLabel + '</span>'
         + '</div>';
 
-      if (d.classification) {
+      if (isDegraded) {
+        html += '<div class="ai-classification" style="color:var(--accent-amber)">LLM unavailable — degraded mode</div>';
+      } else if (d.classification) {
         html += '<div class="ai-classification">' + esc(d.classification) + '</div>';
       }
 
-      html += '<div class="ai-reasoning-text">' + esc(d.reasoning || d.summary || '') + '</div>';
+      if (!isDegraded && d.reasoning) {
+        html += '<div class="ai-reasoning-text">' + esc(d.reasoning) + '</div>';
+      }
 
-      if (d.action) {
-        html += '<div class="ai-action">→ ' + esc(d.action) + '</div>';
+      if (d.urgency) {
+        html += '<div class="ai-action">Urgency: ' + esc(d.urgency) + '</div>';
       }
 
       html += '</div>';
