@@ -353,7 +353,6 @@
     // Auto-queue response to HQ request
     enqueueMessage('STATUS', 'HQ');
   });
-  });
 
   // Connection status
   socket.on('connect', setConnected);
@@ -547,7 +546,7 @@
     if (waypoint) {
       var wx = waypoint.x * w;
       var wy = waypoint.y * h;
-      ctx.strokeStyle = 'var(--accent-amber)';
+      ctx.strokeStyle = '#FBBF24';
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
