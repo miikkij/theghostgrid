@@ -161,7 +161,7 @@ body {
   letter-spacing: 0.04em;
 }
 
-.header-right {
+.header-left {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -219,10 +219,11 @@ body {
   margin-left: auto;
 }
 
-/* Tactical map */
+/* Tactical map — fills available vertical space */
 .tac-map {
   position: relative;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 120px;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--border-default);
@@ -231,7 +232,7 @@ body {
 
 #tac-map-canvas {
   width: 100%;
-  height: 140px;
+  height: 100%;
   display: block;
   touch-action: none;
 }

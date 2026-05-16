@@ -343,23 +343,16 @@
     showAlert(alert);
   });
 
-  // HQ requests
+  // HQ requests — queue a response only when HQ asks
   socket.on('phone.hq_request', function (req) {
     if (req.callsign && req.callsign !== node.callsign) return;
     hqRequests.unshift(req);
     if (hqRequests.length > 5) hqRequests.length = 5;
     renderHQRequests();
-    vibrate(HAPTIC.RX);
+    vibrate(HAPTIC.ALERT);
+    // Auto-queue response to HQ request
+    enqueueMessage('STATUS', 'HQ');
   });
-
-  // SITREP request → all units queue a STATUS message
-  socket.on('node_state_change', function (data) {
-    if (data.callsign === node.callsign && data.state === 'TX') {
-      // Server forced TX (SITREP) — add to queue if empty
-      if (outboundQueue.length === 0) {
-        enqueueMessage('STATUS', 'HQ');
-      }
-    }
   });
 
   // Connection status
@@ -443,29 +436,33 @@
 
   function initTacMap() {
     if (!$tacMapCanvas) return;
-    var rect = $tacMapCanvas.getBoundingClientRect();
-    var dpr = window.devicePixelRatio || 1;
-    $tacMapCanvas.width = rect.width * dpr;
-    $tacMapCanvas.height = 140 * dpr;
     var ctx = $tacMapCanvas.getContext('2d');
+    var dpr = window.devicePixelRatio || 1;
 
-    // Tap to set waypoint
+    function resizeMap() {
+      var rect = $tacMapCanvas.getBoundingClientRect();
+      $tacMapCanvas.width = rect.width * dpr;
+      $tacMapCanvas.height = rect.height * dpr;
+    }
+    resizeMap();
+    window.addEventListener('resize', resizeMap);
+
+    // Tap to set waypoint — only queues POS when moving to new position
     $tacMapCanvas.addEventListener('click', function (e) {
       var br = $tacMapCanvas.getBoundingClientRect();
       var x = (e.clientX - br.left) / br.width;
       var y = (e.clientY - br.top) / br.height;
       waypoint = { x: Math.max(0.05, Math.min(0.95, x)), y: Math.max(0.05, Math.min(0.95, y)) };
-      enqueueMessage('POS', 'MESH');
       vibrate(10);
     });
 
-    // Render loop
-    setInterval(function () { renderTacMap(ctx, dpr); }, 100);
+    setInterval(function () { renderTacMap(ctx, dpr); }, 80);
   }
 
   function renderTacMap(ctx, dpr) {
     var w = $tacMapCanvas.width / dpr;
     var h = $tacMapCanvas.height / dpr;
+    if (w === 0 || h === 0) return;
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -475,50 +472,75 @@
     // Grid
     ctx.strokeStyle = 'rgba(42, 52, 71, 0.4)';
     ctx.lineWidth = 0.5;
-    for (var gx = 0; gx < w; gx += 30) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
-    for (var gy = 0; gy < h; gy += 30) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+    var step = Math.max(20, Math.min(40, w / 10));
+    for (var gx = step; gx < w; gx += step) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+    for (var gy = step; gy < h; gy += step) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
 
     // Move node toward waypoint
     if (waypoint && node.area) {
       var dx = waypoint.x - node.area.x;
       var dy = waypoint.y - node.area.y;
       var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 0.01) {
-        var speed = 0.003;
+      if (dist > 0.008) {
+        var speed = 0.002;
         node.area.x += (dx / dist) * speed;
         node.area.y += (dy / dist) * speed;
         if (socket) socket.emit('phone.move', { callsign: node.callsign, position: node.area });
       } else {
+        // Arrived at waypoint — queue POS report
         waypoint = null;
+        enqueueMessage('POS', 'MESH');
       }
     }
 
-    // Draw neighbors as dots
+    // Draw neighbors
     for (var i = 0; i < node.neighbors.length; i++) {
       var nid = node.neighbors[i];
-      // Approximate neighbor position from name hash
       var hash = 0;
       for (var c = 0; c < nid.length; c++) hash = ((hash << 5) - hash + nid.charCodeAt(c)) | 0;
       var nx = (((hash & 0xFF) / 255) * 0.7 + 0.15) * w;
       var ny = (((hash >> 8 & 0xFF) / 255) * 0.7 + 0.15) * h;
-      ctx.fillStyle = 'rgba(34, 211, 238, 0.4)';
+
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.3)';
       ctx.beginPath();
       ctx.arc(nx, ny, 3, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.4)';
+      ctx.font = '500 6px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(nid, nx, ny + 10);
     }
 
-    // Draw self
+    // Draw self — prominent pulsing dot with crosshair
     if (node.area) {
       var sx = node.area.x * w;
       var sy = node.area.y * h;
+      var pulse = 1 + Math.sin(Date.now() * 0.004) * 0.3;
+
+      // Crosshair
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.3)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(sx - 12, sy); ctx.lineTo(sx + 12, sy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx, sy - 12); ctx.lineTo(sx, sy + 12); ctx.stroke();
+
+      // Outer ring
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 8 * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Inner dot
       ctx.fillStyle = '#22D3EE';
       ctx.beginPath();
-      ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+      ctx.arc(sx, sy, 4, 0, Math.PI * 2);
       ctx.fill();
+
+      // Label
       ctx.fillStyle = '#F8FAFC';
-      ctx.font = '500 7px "JetBrains Mono", monospace';
+      ctx.font = 'bold 8px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('YOU', sx, sy - 8);
+      ctx.fillText(node.callsign || 'YOU', sx, sy - 14);
     }
 
     // Draw waypoint
