@@ -128,7 +128,7 @@ function initRouter() {
 
   // Forward honeypot triggers as events
   state.on('deception.honeypot_triggered', (data) => {
-    broadcastEvent('honeypot', 'Honeypot ' + (data.honeypotId || '') + ' triggered: ' + (data.type || 'unknown'));
+    broadcastEvent('honeypot', 'Honeypot ' + (data.honeypotId || '') + ' triggered: ' + (data.eventType || data.type || 'contact'));
   });
 
   // Forward mesh events as ops log entries
