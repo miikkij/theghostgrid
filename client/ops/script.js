@@ -158,10 +158,10 @@
       state.connected = true;
       state.active_patterns = [];
       Controls.resetPatterns();
-      Controls.setPaused(false);
       updateSystemState('ACTIVE', 'connected');
       hideBanner();
       setControlsEnabled(true);
+      Controls.setPaused(false);
     });
 
     sock.on('disconnect', function () {
