@@ -47,6 +47,7 @@ class BattlefieldRenderer {
     this._drawTransmissionArcs(state.active_transmissions, state.nodes, time);
     this._drawMeshHops(state.mesh_hops, time);
     this._drawNodes(state.nodes, time);
+    this._drawHQKnownPositions(state.units, time);
     this._drawAlerts(state.active_alerts, state.nodes, time);
   }
 
@@ -578,6 +579,48 @@ class BattlefieldRenderer {
   }
 
   // --- Alerts (honeypot triggered) ---
+
+  // --- HQ-known positions (blue rings showing what ops sees) ---
+
+  _drawHQKnownPositions(units, time) {
+    if (!units) return;
+    const ctx = this.ctx;
+    const entries = Object.entries(units);
+    if (entries.length === 0) return;
+
+    ctx.save();
+
+    for (const [, unit] of entries) {
+      if (!unit.position) continue;
+
+      const x = unit.position.x * this.width;
+      const y = unit.position.y * this.height;
+
+      // Pulsing ring
+      const pulse = 1 + Math.sin(time * 0.003) * 0.15;
+      const age = Date.now() - (unit.lastReport || 0);
+      const stale = age > 15000;
+
+      ctx.strokeStyle = stale ? 'rgba(100, 116, 139, 0.3)' : 'rgba(34, 211, 238, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(x, y, 12 * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Small "HQ" label
+      if (!stale) {
+        ctx.setLineDash([]);
+        ctx.font = '500 6px "JetBrains Mono", monospace';
+        ctx.fillStyle = 'rgba(34, 211, 238, 0.4)';
+        ctx.textAlign = 'center';
+        ctx.fillText('HQ', x, y + 20);
+      }
+    }
+
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
 
   _drawAlerts(alerts, nodes, time) {
     if (!alerts || alerts.length === 0) return;

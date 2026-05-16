@@ -257,6 +257,7 @@ function updateUnitRecord(callsign, nodeData, msgType) {
   units[callsign] = unit;
   state.set('units', units);
   state.broadcastTo('ops', 'unit_update', unit);
+  state.broadcastTo('screen', 'unit_update', unit);
 }
 
 module.exports = { initPhoneSim };

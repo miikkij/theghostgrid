@@ -15,6 +15,7 @@ var EMPTY_STATE = {
   mesh_hops: [],
   active_alerts: [],
   stats: { packets_total: 0, packets_dropped: 0, sync_drift_ms: 0, ai_decisions: 0 },
+  units: {},
   ai_reasoning: null,
   channel: { current: null, sequence: [], hop_index: 0 },
 };
@@ -517,6 +518,7 @@ if (isMock) {
     if (fullState.drones) state.drones = fullState.drones;
     if (fullState.jamming_zones) state.jamming_zones = fullState.jamming_zones;
     if (fullState.stats) Object.assign(state.stats, fullState.stats);
+    if (fullState.units) state.units = fullState.units;
   });
 
   if (socket) {
@@ -540,6 +542,11 @@ if (isMock) {
         to: data.to,
         expires_at: Date.now() + 50,
       });
+    });
+
+    // Unit position updates (HQ-known positions for ring overlay)
+    socket.on('unit_update', function(unit) {
+      state.units[unit.callsign] = unit;
     });
 
     // Mesh hop-by-hop visualization
