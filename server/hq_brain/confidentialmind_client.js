@@ -56,11 +56,13 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
 
     const data = await res.json();
 
-    console.log('=== FULL API RESPONSE ===');
-    console.log(JSON.stringify(data, null, 2));
-    console.log('=== END ===');
-
     const msg = data.choices?.[0]?.message;
+
+    if (process.env.CM_DEBUG === 'true') {
+      console.log('=== FULL API RESPONSE ===');
+      console.log(JSON.stringify(data, null, 2));
+      console.log('=== END ===');
+    }
     return extractResponse(msg);
   } finally {
     clearTimeout(timeout);
