@@ -80,7 +80,6 @@ function start() {
   _startedAt = Date.now();
   _steps = buildSteps();
   log.info('===== FULL PITCH SEQUENCE STARTED =====');
-  broadcastStep('Pitch sequence started — 5 minutes');
   scheduleRemaining();
 }
 
