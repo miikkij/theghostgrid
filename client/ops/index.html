@@ -8,186 +8,160 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/shared/design-system.css">
-  <style>
-    body { padding: 1rem; }
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background: var(--bg-panel);
-      border: 1px solid var(--bg-border);
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      font-family: var(--font-mono);
-      font-size: 0.875rem;
-    }
-    .top-bar .label { color: var(--text-muted); }
-    .top-bar .value { color: var(--text-primary); margin-right: 1.5rem; }
-    .status-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: var(--green);
-      color: var(--bg-base);
-    }
-    h1 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-bright);
-      margin-bottom: 1rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 1rem;
-    }
-    .panel {
-      background: var(--bg-panel);
-      border: 1px solid var(--bg-border);
-      border-radius: 8px;
-      padding: 1rem;
-    }
-    .panel h2 {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 0.75rem;
-    }
-    .trigger-btn {
-      display: block;
-      width: 100%;
-      padding: 0.625rem 1rem;
-      margin-bottom: 0.5rem;
-      border: 1px solid var(--bg-border);
-      border-radius: 6px;
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-      font-family: var(--font-sans);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      text-align: left;
-      transition: background 0.1s, border-color 0.1s;
-    }
-    .trigger-btn:hover { background: var(--bg-panel); border-color: var(--cyan); }
-    .trigger-btn:active { background: var(--bg-base); }
-    .trigger-btn.danger { border-color: var(--red); }
-    .trigger-btn.danger:hover { background: #1a0a0a; }
-    .trigger-btn.warn { border-color: var(--amber); }
-    #event-log {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      line-height: 1.6;
-      color: var(--text-secondary);
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .log-entry { padding: 0.25rem 0; border-bottom: 1px solid var(--bg-border); }
-    #conn-status {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--gray);
-    }
-  </style>
+  <link rel="stylesheet" href="/static/ops/style.css">
 </head>
 <body>
-  <div id="conn-status"></div>
+  <div id="disconnected-banner" class="disconnected-banner">CONNECTION LOST — Reconnecting…</div>
 
-  <div class="top-bar">
-    <div>
-      <span class="label">Cycle </span><span class="value" id="bar-cycle">0</span>
-      <span class="label">Nodes </span><span class="value" id="bar-nodes">0</span>
-      <span class="label">Pkts/s </span><span class="value" id="bar-packets">0</span>
-      <span class="label">Drift </span><span class="value" id="bar-drift">0ms</span>
+  <header id="status-bar">
+    <div class="brand">TACTICAL MESH / OPS</div>
+    <div class="status-metrics">
+      <span class="metric"><span class="label">Cycle</span> <span class="value" data-cycle>0</span></span>
+      <span class="metric"><span class="label">Nodes</span> <span class="value" data-nodes>0</span></span>
+      <span class="metric"><span class="label">Pkts/s</span> <span class="value" data-pps>0</span></span>
+      <span class="metric"><span class="label">Drift</span> <span class="value" data-drift>0ms</span></span>
+      <span class="metric"><span class="label">AI</span> <span class="value" data-ai-status>OFF</span></span>
     </div>
-    <span class="status-badge" id="bar-status">ACTIVE</span>
-  </div>
+    <div class="system-state">
+      <span class="status-dot" data-system-status></span>
+      <span class="system-label" data-system-label>READY</span>
+    </div>
+  </header>
 
-  <h1>Operator Dashboard</h1>
+  <main id="dashboard">
+    <!-- LEFT: Scenario triggers + cycle control -->
+    <section id="controls" class="panel">
+      <h2>SCENARIO TRIGGERS</h2>
 
-  <div class="grid">
-    <div>
-      <div class="panel">
-        <h2>Scenario Triggers</h2>
-        <button class="trigger-btn danger" data-scenario="inject_jamming">Inject Jamming</button>
-        <button class="trigger-btn danger" data-scenario="drop_drone">Drop Drone</button>
-        <button class="trigger-btn warn" data-scenario="activate_decoys">Activate Decoys</button>
-        <button class="trigger-btn warn" data-scenario="start_wave_pattern">Start Wave Pattern</button>
-        <button class="trigger-btn danger" data-scenario="trigger_honeypot">Trigger Honeypot</button>
-        <button class="trigger-btn" data-scenario="force_ai_adaptation">Force AI Adaptation</button>
-        <button class="trigger-btn" data-scenario="pause_cycles">Pause Cycles</button>
-        <button class="trigger-btn danger" data-scenario="reset_state">Reset State</button>
+      <div class="control-group">
+        <h3>Adversarial</h3>
+        <button class="btn btn-danger" data-trigger="inject_jamming">
+          <span>Inject Jamming</span><span class="kbd">J</span>
+        </button>
+        <button class="btn btn-danger" data-trigger="drop_drone">
+          <span>Drop Drone</span><span class="kbd">D</span>
+        </button>
+        <button class="btn btn-danger" data-trigger="trigger_honeypot">
+          <span>Trigger Honeypot</span><span class="kbd">H</span>
+        </button>
       </div>
-    </div>
-    <div>
-      <div class="panel">
-        <h2>Event Log</h2>
-        <div id="event-log">
-          <div class="log-entry">Waiting for events...</div>
+
+      <div class="control-group">
+        <h3>Deception</h3>
+        <button class="btn btn-warn" data-trigger="activate_decoys">
+          <span>Activate Decoys</span><span class="kbd">A</span>
+        </button>
+        <button class="btn btn-warn" data-trigger="pattern_linear">
+          <span>Linear Wave</span>
+        </button>
+        <button class="btn btn-warn" data-trigger="pattern_convoy">
+          <span>Phantom Convoy</span>
+        </button>
+        <button class="btn btn-warn" data-trigger="pattern_radial">
+          <span>Radial Expansion</span>
+        </button>
+      </div>
+
+      <div class="control-group">
+        <h3>AI</h3>
+        <button class="btn btn-info" data-trigger="trigger_ai_adaptation">
+          <span>Force AI Adaptation</span>
+        </button>
+      </div>
+
+      <div class="control-group">
+        <h3>System</h3>
+        <button class="btn btn-neutral" data-trigger="pause_cycles">
+          <span>Pause Cycles</span><span class="kbd">␣</span>
+        </button>
+        <button class="btn btn-neutral" data-trigger="resume_cycles" disabled>
+          <span>Resume</span><span class="kbd">␣</span>
+        </button>
+        <button class="btn btn-neutral" data-trigger="reset_state">
+          <span>Reset State</span><span class="kbd">R</span>
+        </button>
+      </div>
+
+      <div class="control-group">
+        <h3>Demo Sequence</h3>
+        <button class="btn btn-primary" data-trigger="run_full_pitch">
+          <span>Run Full Pitch (5 min)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- CENTER: Minimap + event log -->
+    <section id="center-column">
+      <div id="minimap" class="panel">
+        <h2>LIVE MESH STATE</h2>
+        <canvas id="minimap-canvas"></canvas>
+      </div>
+
+      <div id="event-log" class="panel">
+        <h2>EVENT LOG</h2>
+        <div class="event-log-content"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: AI reasoning + adapters + cycle control -->
+    <section id="right-column">
+      <div id="ai-panel" class="panel">
+        <h2>AI REASONING</h2>
+        <div class="ai-content">
+          <div class="ai-no-data">No recent AI decisions</div>
+        </div>
+        <div class="ai-history">
+          <h3>Recent Decisions</h3>
+          <div class="ai-history-list"></div>
         </div>
       </div>
-    </div>
-  </div>
+
+      <div id="adapters-panel" class="panel">
+        <h2>ADAPTERS</h2>
+        <div class="adapter-row">
+          <span class="adapter-name">wlan1 (drone)</span>
+          <span class="adapter-status unknown" data-adapter="wlan1">—</span>
+        </div>
+        <div class="adapter-row">
+          <span class="adapter-name">wlan2 (ground 1)</span>
+          <span class="adapter-status unknown" data-adapter="wlan2">—</span>
+        </div>
+        <div class="adapter-row">
+          <span class="adapter-name">wlan3 (ground 2)</span>
+          <span class="adapter-status unknown" data-adapter="wlan3">—</span>
+        </div>
+        <div class="adapter-row">
+          <span class="adapter-name">ConfidentialMind</span>
+          <span class="adapter-status unknown" data-adapter="cm">—</span>
+        </div>
+      </div>
+
+      <div id="cycle-control" class="panel">
+        <h2>CYCLE</h2>
+        <label>Period
+          <select data-cycle-period>
+            <option value="250">250ms (fast)</option>
+            <option value="500">500ms</option>
+            <option value="1000" selected>1000ms (normal)</option>
+            <option value="2000">2000ms</option>
+            <option value="5000">5000ms (slow)</option>
+          </select>
+        </label>
+        <div class="active-patterns">
+          <h3>Active Patterns</h3>
+          <ul class="patterns-list">
+            <li class="no-patterns">No active patterns</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="connection-indicator" class="status-dot"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/static/shared/connection.js"></script>
-  <script>
-    const logEl = document.getElementById('event-log');
-    let eventCount = 0;
-
-    function addLogEntry(text) {
-      eventCount++;
-      const ts = new Date().toLocaleTimeString();
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      entry.textContent = ts + ' ' + text;
-      logEl.prepend(entry);
-      while (logEl.children.length > 50) logEl.removeChild(logEl.lastChild);
-    }
-
-    const socket = connectToMesh('ops', (state) => {
-      document.getElementById('bar-nodes').textContent = Object.keys(state.nodes).length;
-      document.getElementById('bar-packets').textContent = state.stats.packets_total;
-      document.getElementById('bar-drift').textContent = state.stats.sync_drift_ms + 'ms';
-    });
-
-    socket.on('cycle_tick', (data) => {
-      document.getElementById('bar-cycle').textContent = data.number;
-    });
-
-    socket.on('scenario_triggered', (data) => {
-      addLogEntry('Scenario: ' + data.scenario);
-    });
-
-    socket.on('node_state_change', (data) => {
-      addLogEntry('Node: ' + data.path + ' -> ' + JSON.stringify(data.value));
-    });
-
-    socket.on('alert', (data) => {
-      addLogEntry('ALERT: ' + JSON.stringify(data));
-    });
-
-    socket.on('ai_decision', (data) => {
-      addLogEntry('AI: ' + JSON.stringify(data));
-    });
-
-    document.querySelectorAll('.trigger-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const scenario = btn.dataset.scenario;
-        socket.emit('ops.trigger_scenario', { scenario });
-        addLogEntry('Triggered: ' + scenario);
-        btn.style.opacity = '0.5';
-        setTimeout(() => { btn.style.opacity = '1'; }, 200);
-      });
-    });
-  </script>
+  <script src="/static/ops/controls.js"></script>
+  <script src="/static/ops/script.js"></script>
 </body>
 </html>

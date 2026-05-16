@@ -157,3 +157,35 @@ The spec uses `--bg-deep` while the original stub used `--bg-base`. The design s
 ### Jamming zones support both polygon and circle definitions
 
 The spec shows polygon zones. The renderer also supports `{ center, radius }` circle zones because the server state uses `{ center, radius, since }` format (per `06-build-components.md`). Both are handled transparently — the renderer checks for `polygon` first, falls back to `center`/`radius`.
+
+---
+
+## 2026-05-16 — Operator Dashboard
+
+### Plain script tags instead of ES modules
+
+The spec's `06-PROMPT` shows `controls.js` using `export { socket }` and `script.js` using `import { socket } from './controls.js'` (ES module syntax). The dashboard uses plain `<script>` tags with IIFE module patterns instead, matching the Big Screen's approach. Reason: `connection.js` is loaded as a plain script exposing `connectToMesh` globally; mixing module and non-module scripts adds CORS and load-order complexity that isn't worth it for a 4-file application. `controls.js` exposes a `Controls` namespace, `script.js` creates the socket and passes it to `Controls.init()`.
+
+### Pattern buttons are toggles, not one-shot triggers
+
+The spec says "Click again to deactivate" for pattern buttons. Implemented as client-side toggle state: clicking an active pattern emits `deactivate_pattern` instead of `activate_pattern`. The active state is tracked locally in a `Set` and synchronized via `deception.pattern_activated` / `deception.pattern_deactivated` events from the server. Visual indicator: green left border replaces the amber one when active.
+
+### Spacebar toggles pause/resume based on client-tracked state
+
+The spec lists spacebar as the shortcut for `pause_cycles`. Since pause and resume are separate buttons with separate triggers, spacebar needs to know which to fire. The dashboard tracks `paused` state locally, updated when `cycle_tick` events arrive with `phase: 'paused'`. This avoids a round-trip to check server state before acting.
+
+### Event severity classified by keyword matching on event type
+
+The server sends events with varying structures. Rather than requiring a specific `severity` field (which not all server events include), the dashboard classifies events by scanning the `type` string for keywords: `jam`/`warn`/`degrade` → warning, `honeypot`/`alert`/`fail`/`drop` → alert, `ai` → ai, everything else → routine. Events that arrive with an explicit `severity` field bypass this heuristic.
+
+### Mock mode uses fake EventEmitter, not a mocked Socket.IO
+
+Mock mode (`?mock` URL parameter) creates a minimal `{ on, emit }` object instead of mocking the full Socket.IO client. This avoids loading Socket.IO at all in mock mode (which would fail without a server) and keeps the mock self-contained in `script.js`. The mock simulates realistic data: 8 soldiers, 25 decoys, 3 honeypots, 2 drones, periodic events, AI decisions, and adapter statuses.
+
+### Minimap renders at 10 FPS via setInterval, not requestAnimationFrame
+
+The spec says 10 FPS is sufficient for the minimap. Using `setInterval(renderMinimap, 100)` instead of rAF avoids running at 60 FPS and wasting frame budget. The minimap is informational, not the primary visualization — the Big Screen handles full-fidelity rendering.
+
+### Event log uses DOM fragment construction instead of innerHTML
+
+Each `renderEventLog` call builds a `DocumentFragment` with proper DOM elements rather than concatenating HTML strings. This prevents XSS from malicious event messages while avoiding the overhead of diffing. The fragment is appended once, minimizing layout thrash.
