@@ -473,56 +473,58 @@ body.cursor-visible {
 /* --- Pitch narrator (soldier + speech bubble) --- */
 
 .pitch-narrator {
-  position: absolute;
-  bottom: 60px;
-  right: 24px;
-  z-index: 15;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 25;
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 0;
   pointer-events: none;
   transition: opacity 0.5s var(--ease-default), transform 0.5s var(--ease-default);
 }
 
 .pitch-narrator.hidden {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateX(40px);
 }
 
 .pitch-soldier {
-  width: 100px;
+  width: 140px;
   height: auto;
   flex-shrink: 0;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.6));
 }
 
 .pitch-speech {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 1.25rem;
+  font-weight: 500;
   color: var(--text-bright);
-  background: rgba(10, 14, 26, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  border-radius: 8px;
-  padding: 10px 16px;
-  max-width: 400px;
+  background: rgba(10, 14, 26, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  border-radius: 12px;
+  padding: 16px 24px;
+  max-width: 550px;
   line-height: 1.5;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  margin-bottom: 40px;
+  margin-right: -10px;
   position: relative;
 }
 
-/* Speech bubble arrow pointing right toward soldier */
 .pitch-speech::after {
   content: '';
   position: absolute;
-  right: -8px;
-  bottom: 16px;
+  right: -10px;
+  bottom: 20px;
   width: 0;
   height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-left: 8px solid rgba(34, 211, 238, 0.3);
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 10px solid rgba(34, 211, 238, 0.4);
 }
 
 /* Hide sim/pitch buttons during active pitch */
