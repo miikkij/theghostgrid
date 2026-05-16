@@ -138,10 +138,14 @@ const HANDLERS = {
     const patterns = deception.getActivePatterns();
     if (params.patternId) {
       deception.deactivatePattern(params.patternId);
+    } else if (params.patternName) {
+      // Find pattern by name and deactivate it
+      const match = patterns.find((p) => p.name === params.patternName);
+      if (match) deception.deactivatePattern(match.id);
     } else if (patterns.length > 0) {
       deception.deactivatePattern(patterns[patterns.length - 1].id);
     }
-    log.info('pattern deactivated');
+    log.info({ params }, 'pattern deactivated');
   },
 
   trigger_honeypot(params) {

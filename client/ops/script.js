@@ -156,6 +156,8 @@
 
     sock.on('connect', function () {
       state.connected = true;
+      state.active_patterns = [];
+      Controls.resetPatterns();
       updateSystemState('ACTIVE', 'connected');
       hideBanner();
       setControlsEnabled(true);

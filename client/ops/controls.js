@@ -233,10 +233,18 @@ var Controls = (function () {
     }
   }
 
+  function resetPatterns() {
+    activePatterns.clear();
+    document.querySelectorAll('.pattern-active').forEach(function (btn) {
+      btn.classList.remove('pattern-active');
+    });
+  }
+
   return {
     init: init,
     setPaused: setPaused,
     setPatternActive: setPatternActive,
+    resetPatterns: resetPatterns,
     getActivePatterns: function () { return activePatterns; },
   };
 })();
