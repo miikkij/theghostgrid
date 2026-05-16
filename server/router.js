@@ -121,6 +121,20 @@ function initRouter() {
     state.broadcastTo('ops', 'transmission_arc', data);
   });
 
+  // Forward channel hop sequences when burst window opens
+  state.on('transmission.burst_window_open', (data) => {
+    const allocs = data.allocations || {};
+    const nodeIds = Object.keys(allocs);
+    // Pick the first real node's hop sequence as the representative display
+    const first = nodeIds.length > 0 ? allocs[nodeIds[0]] : null;
+    if (first && first.frequencyHops) {
+      state.broadcastTo('screen', 'channel_hops', {
+        cycle: data.cycle,
+        sequence: first.frequencyHops,
+      });
+    }
+  });
+
   // Forward deception pattern changes (both event name variants)
   state.on('deception.pattern_activated', (data) => {
     state.broadcast('pattern_update', data);

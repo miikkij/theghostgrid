@@ -583,6 +583,23 @@ if (isMock) {
       }
     });
 
+    // Hop sequence from burst window — animate through channels
+    socket.on('channel_hops', function(data) {
+      if (!data.sequence || data.sequence.length === 0) return;
+      state.channel.sequence = data.sequence;
+      state.channel.hop_index = 0;
+      state.channel.current = data.sequence[0];
+      var hopDelay = 5;
+      for (var i = 0; i < data.sequence.length; i++) {
+        (function(idx) {
+          setTimeout(function() {
+            state.channel.hop_index = idx;
+            state.channel.current = data.sequence[idx];
+          }, idx * hopDelay);
+        })(i);
+      }
+    });
+
     socket.on('disconnect', function() { setDisconnected(true); });
     socket.on('connect', function() { setDisconnected(false); });
     socket.on('reconnect', function() { setDisconnected(false); });
