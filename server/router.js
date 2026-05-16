@@ -9,14 +9,30 @@ const log = require('./log').child({ component: 'router' });
  * the router handles cross-cutting fan-out to the browser layer.
  */
 function initRouter() {
+  // --- Packets-per-second tracking ---
+  let _prevPackets = 0;
+  let _pps = 0;
+  setInterval(() => {
+    const current = state.get('stats.packets_total') || 0;
+    _pps = current - _prevPackets;
+    _prevPackets = current;
+    state.set('stats.pps', _pps);
+  }, 1000);
+
+  function currentStats() {
+    const s = state.get('stats') || {};
+    return { packets_total: s.packets_total || 0, sync_drift_ms: s.sync_drift_ms || 0, pps: s.pps || _pps, ai_decisions: s.ai_decisions || 0 };
+  }
+
   // Forward cycle phase changes to all WS clients
-  // Include last_alpha_ts and sync_beta_offset_ms so phone clients can compute countdown
+  // Include stats so screens/ops get live telemetry every phase change
   state.on('cycle.sync_alpha', (data) => {
     state.broadcast('cycle_tick', {
       ...data,
       phase: 'sync_alpha',
       last_alpha_ts: data.ts,
       sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+      stats: currentStats(),
     });
   });
 
@@ -26,6 +42,7 @@ function initRouter() {
       phase: 'prep',
       last_alpha_ts: state.get('cycle.last_alpha_ts'),
       sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+      stats: currentStats(),
     });
   });
 
@@ -35,6 +52,7 @@ function initRouter() {
       phase: 'sync_beta_burst',
       last_alpha_ts: state.get('cycle.last_alpha_ts'),
       sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+      stats: currentStats(),
     });
   });
 
@@ -44,6 +62,7 @@ function initRouter() {
       phase: 'idle',
       last_alpha_ts: state.get('cycle.last_alpha_ts'),
       sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+      stats: currentStats(),
     });
   });
 

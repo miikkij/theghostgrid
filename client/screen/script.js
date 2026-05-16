@@ -523,6 +523,9 @@ if (isMock) {
 
   if (socket) {
     socket.on('cycle_tick', function(data) {
+      if (data.stats) {
+        Object.assign(state.stats, data.stats);
+      }
       Object.assign(state.cycle, data);
       if (data.phase === 'sync_alpha') state.cycle.last_alpha_ts = performance.now();
       if (data.phase === 'sync_beta_burst') state.cycle.last_beta_ts = performance.now();
