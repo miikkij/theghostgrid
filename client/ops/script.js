@@ -94,7 +94,8 @@
       addEvent(event);
     });
 
-    sock.on('ai.decision', function (decision) {
+    // AI decisions — listen for both name variants (dot and underscore)
+    function handleAIDecision(decision) {
       state.ai_reasoning = decision;
       state.ai_history.unshift(decision);
       if (state.ai_history.length > MAX_AI_HISTORY) state.ai_history.length = MAX_AI_HISTORY;
@@ -102,9 +103,11 @@
       addEvent({
         type: 'ai_decision',
         severity: 'ai',
-        message: decision.summary || 'AI decision rendered',
+        message: decision.summary || decision.classification || 'AI decision rendered',
       });
-    });
+    }
+    sock.on('ai.decision', handleAIDecision);
+    sock.on('ai_decision', handleAIDecision);
 
     sock.on('adapter_status', function (data) {
       state.adapters[data.adapter] = data.status;
@@ -112,21 +115,27 @@
       renderAdapterStatus();
     });
 
-    sock.on('deception.pattern_activated', function (data) {
+    // Pattern events — listen for both name variants
+    function handlePatternActivated(data) {
       state.active_patterns.push(data);
       renderActivePatterns();
       var trigger = patternNameToTrigger(data.patternName || data.name);
       if (trigger) Controls.setPatternActive(trigger, true);
-    });
-
-    sock.on('deception.pattern_deactivated', function (data) {
+    }
+    function handlePatternDeactivated(data) {
       state.active_patterns = state.active_patterns.filter(function (p) {
         return p.id !== data.id;
       });
       renderActivePatterns();
       var trigger = patternNameToTrigger(data.patternName || data.name);
       if (trigger) Controls.setPatternActive(trigger, false);
+    }
+    sock.on('deception.pattern_activated', handlePatternActivated);
+    sock.on('pattern_update', function (data) {
+      if (data.action === 'activated' || data.patternName) handlePatternActivated(data);
+      else if (data.action === 'deactivated') handlePatternDeactivated(data);
     });
+    sock.on('deception.pattern_deactivated', handlePatternDeactivated);
 
     sock.on('scenario_result', function (data) {
       var severity = data.success ? 'routine' : 'alert';

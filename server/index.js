@@ -10,6 +10,7 @@ const { initRouter } = require('./router');
 const { initPhoneSim } = require('./phone_sim');
 const { initHealthMonitor } = require('./health_monitor');
 const scenarios = require('./demo/scenarios');
+const demoScript = require('./demo/script');
 const hqBrain = require('./hq_brain');
 
 // --- Cycle ticker ---
@@ -96,6 +97,7 @@ attachWebSocket(server);
 initRouter();
 initPhoneSim();
 scenarios.init(state, cycleTicker);
+demoScript.init(state);
 
 state.set('cycle.period_ms', config.cycle.period_ms);
 
