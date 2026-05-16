@@ -84,7 +84,13 @@ function extractResponse(msg) {
   for (var text of primary) {
     if (!text) continue;
 
-    // Try direct JSON parse
+    // Strip markdown code fences (```json ... ```)
+    var cleaned = text.replace(/^[\s\S]*?```(?:json)?\s*\n?/i, '').replace(/\n?```[\s\S]*$/, '').trim();
+    if (cleaned.startsWith('{')) {
+      try { return JSON.parse(cleaned); } catch { /* not valid after stripping */ }
+    }
+
+    // Try direct JSON parse on raw text
     try { return JSON.parse(text); } catch { /* not raw JSON */ }
 
     // Try extracting JSON object from text
