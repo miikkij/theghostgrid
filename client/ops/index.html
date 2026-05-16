@@ -34,7 +34,7 @@
       <h2>SCENARIO TRIGGERS</h2>
 
       <div class="control-group">
-        <h3>Adversarial</h3>
+        <h3>Adversarial <span class="help-btn" data-help="adversarial">?</span></h3>
         <button class="btn btn-danger" data-trigger="inject_jamming">
           <span><i class="ico">⚡</i>Inject Jamming</span><span class="kbd">J</span>
         </button>
@@ -50,7 +50,7 @@
       </div>
 
       <div class="control-group">
-        <h3>Deception</h3>
+        <h3>Deception <span class="help-btn" data-help="deception">?</span></h3>
         <button class="btn btn-warn" data-trigger="activate_decoys">
           <span><i class="ico">◇</i>Activate Decoys</span><span class="kbd">A</span>
         </button>
@@ -66,7 +66,7 @@
       </div>
 
       <div class="control-group">
-        <h3>AI / HQ</h3>
+        <h3>AI / HQ <span class="help-btn" data-help="ai">?</span></h3>
         <button class="btn btn-info" data-trigger="trigger_ai_adaptation">
           <span><i class="ico">⟳</i>Force AI Adaptation</span>
         </button>
@@ -76,7 +76,7 @@
       </div>
 
       <div class="control-group">
-        <h3>System</h3>
+        <h3>System <span class="help-btn" data-help="system">?</span></h3>
         <button class="btn btn-neutral" data-trigger="pause_cycles">
           <span><i class="ico">⏸</i>Pause Cycles</span><span class="kbd">␣</span>
         </button>
@@ -89,7 +89,7 @@
       </div>
 
       <div class="control-group">
-        <h3>Demo Sequence</h3>
+        <h3>Demo Sequence <span class="help-btn" data-help="demo">?</span></h3>
         <button class="btn btn-primary" data-trigger="run_full_pitch">
           <span><i class="ico">▶▶</i>Run Full Pitch (5 min)</span>
         </button>
@@ -184,6 +184,17 @@
     </section>
   </main>
 
+
+  <!-- Help modal -->
+  <div id="help-modal" class="help-modal hidden">
+    <div class="help-modal-content">
+      <div class="help-modal-header">
+        <h3 id="help-modal-title"></h3>
+        <button class="help-modal-close">&times;</button>
+      </div>
+      <div id="help-modal-body"></div>
+    </div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/static/shared/connection.js"></script>

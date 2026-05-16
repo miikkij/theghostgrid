@@ -717,6 +717,75 @@
   }
 
   // =============================================
+  // =============================================
+  // Help modals
+  // =============================================
+
+  var HELP = {
+    adversarial: {
+      title: 'Adversarial Scenarios',
+      body: '<p><strong>Inject Jamming</strong> <span class="help-key">J</span> — Simulates an enemy EW (electronic warfare) attack. Creates a red jamming zone on the big screen. Nodes inside the zone lose connectivity and show JAMMED state. The mesh routing reconverges around the dead zone automatically.</p>'
+        + '<p><strong>Drop Drone</strong> <span class="help-key">D</span> — Removes one sync drone from the battlefield. Remaining drones continue providing time discipline. Tests redundancy of the sync beacon architecture.</p>'
+        + '<p><strong>Deploy Drone</strong> — Adds a new drone at a random position. Use after dropping one to demonstrate recovery, or to add more sync/decoy drones.</p>'
+        + '<p><strong>Trigger Honeypot</strong> <span class="help-key">H</span> — Spawns a honeypot sensor node and triggers it with an artillery detection event. The AI tactical loop processes the event, and if urgency is HIGH, an alert is broadcast to all phones in the affected area.</p>'
+    },
+    deception: {
+      title: 'Deception Choreography',
+      body: '<p>Decoy emitters (EUR 25 each) are statistically indistinguishable from real soldiers at the protocol level. These controls manage their spatial-temporal choreography.</p>'
+        + '<p><strong>Activate Decoys</strong> <span class="help-key">A</span> — Spawns 47 decoy nodes + 3 honeypots. Decoys appear as small gray dots on the big screen. Required before activating wave patterns.</p>'
+        + '<p><strong>Linear Wave</strong> — Decoys emit in a band sweeping across the area. Looks like a battalion moving in one direction.</p>'
+        + '<p><strong>Phantom Convoy</strong> — Activation propagates along a path, simulating a convoy or patrol route.</p>'
+        + '<p><strong>Radial Expansion</strong> — Expanding ring of activity from a center point, simulating forces deploying outward.</p>'
+        + '<p>Pattern buttons toggle — click once to activate (green border), click again to deactivate. Multiple patterns can run simultaneously.</p>'
+    },
+    ai: {
+      title: 'AI / HQ Brain',
+      body: '<p>The HQ Brain is an AI running on ConfidentialMind\'s sovereign infrastructure (or Ollama locally). It processes tactical events and makes decisions.</p>'
+        + '<p><strong>Force AI Adaptation</strong> — Triggers the operational AI loop, which analyzes the last 15 minutes of activity and recommends changes to the deception choreography. The AI reasoning appears in the AI panel on the right.</p>'
+        + '<p><strong>Request SITREP</strong> — HQ requests a status report from ALL soldiers simultaneously. Every unit transmits their STATUS on the next sync pulse. The big screen lights up with transmission arcs as all units report in. The Units tab updates with battery, ammo, and position data.</p>'
+        + '<p>The AI status in the top bar shows which backend is active (HQ.Brain = ConfidentialMind, Ollama = local). The (+reasoning) toggle enables/disables the model\'s thinking mode.</p>'
+    },
+    system: {
+      title: 'System Controls',
+      body: '<p><strong>Pause Cycles</strong> <span class="help-key">Space</span> — Stops the burst cycle ticker. All nodes freeze in their current state. Useful for explaining what\'s happening during the demo.</p>'
+        + '<p><strong>Resume</strong> <span class="help-key">Space</span> — Restarts the cycle ticker from where it paused.</p>'
+        + '<p><strong>Reset State</strong> <span class="help-key">R</span> — Clears all jamming zones, resets node states, deactivates all wave patterns, restores drones. Returns the system to a clean starting state.</p>'
+    },
+    demo: {
+      title: 'Demo Sequence',
+      body: '<p><strong>Run Full Pitch (5 min)</strong> — Automated 5-minute demo sequence following the hackathon pitch script. Steps through: sync beacon → burst protocol → EW attack → drone loss → decoy activation → wave choreography → honeypot trigger → AI adaptation → recovery.</p>'
+        + '<p><strong>Pause / Continue Pitch</strong> — Freezes the pitch timeline. Use during Q&A — the sequence resumes exactly where it left off.</p>'
+        + '<p><strong>Stop Pitch</strong> — Aborts the pitch sequence entirely. All pending steps are cancelled.</p>'
+        + '<p>Each pitch step is logged in the Event Log with a [PITCH] prefix so you can track progress.</p>'
+    },
+  };
+
+  var helpModal = document.getElementById('help-modal');
+  var helpTitle = document.getElementById('help-modal-title');
+  var helpBody = document.getElementById('help-modal-body');
+
+  document.querySelectorAll('.help-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var key = btn.dataset.help;
+      var info = HELP[key];
+      if (!info) return;
+      helpTitle.textContent = info.title;
+      helpBody.innerHTML = info.body;
+      helpModal.classList.remove('hidden');
+    });
+  });
+
+  if (helpModal) {
+    helpModal.querySelector('.help-modal-close').addEventListener('click', function () {
+      helpModal.classList.add('hidden');
+    });
+    helpModal.addEventListener('click', function (e) {
+      if (e.target === helpModal) helpModal.classList.add('hidden');
+    });
+  }
+
+  // =============================================
   // Mock mode — standalone testing without server
   // =============================================
 
