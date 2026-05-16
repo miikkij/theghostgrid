@@ -479,9 +479,9 @@ if (isMock) {
     });
 
     socket.on('node_state_change', function(data) {
-      if (data.nodeId && state.nodes[data.nodeId]) {
-        Object.assign(state.nodes[data.nodeId], data);
-      }
+      if (!data.nodeId) return;
+      if (!state.nodes[data.nodeId]) state.nodes[data.nodeId] = {};
+      Object.assign(state.nodes[data.nodeId], data);
     });
 
     socket.on('transmission_arc', function(data) {

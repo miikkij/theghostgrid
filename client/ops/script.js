@@ -84,9 +84,10 @@
 
     // Incremental node state changes (keeps minimap and status bar live)
     sock.on('node_state_change', function (data) {
-      if (data.nodeId && state.nodes[data.nodeId]) {
-        Object.assign(state.nodes[data.nodeId], data);
-      }
+      if (!data.nodeId) return;
+      if (!state.nodes[data.nodeId]) state.nodes[data.nodeId] = {};
+      Object.assign(state.nodes[data.nodeId], data);
+      updateStatusBar();
     });
 
     sock.on('event', function (event) {

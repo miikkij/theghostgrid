@@ -55,13 +55,23 @@ function initRouter() {
       const field = parts.slice(2).join('.');
 
       // Send as { nodeId, [field]: value } so clients can update their state maps
+      // When field is empty, the whole node object was set (new node joined)
       const payload = { nodeId };
-      payload[field] = value;
+      if (field) {
+        payload[field] = value;
+      } else {
+        Object.assign(payload, value);
+      }
       state.broadcastTo('screen', 'node_state_change', payload);
       state.broadcastTo('ops', 'node_state_change', payload);
 
       if (field === 'state') {
         state.broadcastTo('phone', 'node_state_change', { callsign: nodeId, state: value });
+      }
+
+      // Log new node joins
+      if (!field && value && value.type === 'soldier') {
+        broadcastEvent('node_join', nodeId + ' joined the mesh');
       }
     }
   });
