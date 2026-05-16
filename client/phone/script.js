@@ -326,6 +326,7 @@
   socket.on('phone.neighbors', function (data) {
     if (data.callsign && data.callsign !== node.callsign) return;
     node.neighbors = data.neighbors || [];
+    node.neighborPositions = data.positions || [];
     renderNeighbors();
   });
 
@@ -490,13 +491,13 @@
       }
     }
 
-    // Draw neighbors
-    for (var i = 0; i < node.neighbors.length; i++) {
-      var nid = node.neighbors[i];
-      var hash = 0;
-      for (var c = 0; c < nid.length; c++) hash = ((hash << 5) - hash + nid.charCodeAt(c)) | 0;
-      var nx = (((hash & 0xFF) / 255) * 0.7 + 0.15) * w;
-      var ny = (((hash >> 8 & 0xFF) / 255) * 0.7 + 0.15) * h;
+    // Draw neighbors at real positions
+    var nps = node.neighborPositions || [];
+    for (var i = 0; i < nps.length; i++) {
+      var np = nps[i];
+      if (!np || !np.position) continue;
+      var nx = np.position.x * w;
+      var ny = np.position.y * h;
 
       ctx.fillStyle = 'rgba(34, 211, 238, 0.3)';
       ctx.beginPath();
@@ -505,7 +506,7 @@
       ctx.fillStyle = 'rgba(34, 211, 238, 0.4)';
       ctx.font = '500 6px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(nid, nx, ny + 10);
+      ctx.fillText(np.id, nx, ny + 10);
     }
 
     // Draw self — prominent pulsing dot with crosshair

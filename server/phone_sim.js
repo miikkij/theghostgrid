@@ -103,14 +103,20 @@ function initPhoneSim() {
     for (var [callsign, nodeData] of phones) {
       if (!nodeData.position) continue;
 
-      var neighbors = computeNeighbors(callsign, nodeData.position, allNodes);
-      state.set(`nodes.${callsign}.neighbors`, neighbors);
-      state.broadcastTo('phone', 'phone.neighbors', { callsign, neighbors });
+      var neighborIds = computeNeighbors(callsign, nodeData.position, allNodes);
+      state.set(`nodes.${callsign}.neighbors`, neighborIds);
+
+      // Send neighbor positions so phone map can render them correctly
+      var neighborsWithPos = neighborIds.map(function (nid) {
+        var n = allNodes.find(function (e) { return e[0] === nid; });
+        return { id: nid, position: n ? n[1].position : null };
+      });
+      state.broadcastTo('phone', 'phone.neighbors', { callsign, neighbors: neighborIds, positions: neighborsWithPos });
 
       // Only TX soldiers generate transmission arcs and events
-      if (txThisCycle.has(callsign) && neighbors.length > 0) {
+      if (txThisCycle.has(callsign) && neighborIds.length > 0) {
         var msg = pickMessageType();
-        var partner = neighbors[Math.floor(Math.random() * neighbors.length)];
+        var partner = neighborIds[Math.floor(Math.random() * neighborIds.length)];
         // Urgent messages route to HQ via drone
         var dest = (msg.type === 'CONTACT' || msg.type === 'CASEVAC' || msg.type === 'FIRE')
           ? 'HQ' : partner;
@@ -133,8 +139,8 @@ function initPhoneSim() {
         // Update unit record in state
         updateUnitRecord(callsign, nodeData, msg.type);
 
-      } else if (neighbors.length > 0) {
-        var sender = neighbors[Math.floor(Math.random() * neighbors.length)];
+      } else if (neighborIds.length > 0) {
+        var sender = neighborIds[Math.floor(Math.random() * neighborIds.length)];
         state.broadcastTo('phone', 'phone.event', {
           callsign,
           ts: Date.now(),
