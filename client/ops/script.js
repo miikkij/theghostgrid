@@ -758,6 +758,34 @@
         + '<p><strong>Stop Pitch</strong> — Aborts the pitch sequence entirely. All pending steps are cancelled.</p>'
         + '<p>Each pitch step is logged in the Event Log with a [PITCH] prefix so you can track progress.</p>'
     },
+    ai_reasoning: {
+      title: 'AI Reasoning Panel',
+      body: '<p>Shows the last AI decision from the HQ Brain tactical or operational loop.</p>'
+        + '<p><strong>Classification</strong> — what the AI identified (e.g. "artillery_overpressure", "localized jamming").</p>'
+        + '<p><strong>Reasoning</strong> — the AI\'s explanation of why it classified the event this way and what action it recommends. Cites sensor data, direction of arrival, and rules of engagement.</p>'
+        + '<p><strong>Confidence</strong> — 0-100%. Green ≥70%, yellow ≥40%, red &lt;40%. If confidence is below 50%, urgency is automatically downgraded one level (HIGH→MEDIUM).</p>'
+        + '<p><strong>Urgency</strong> — HIGH triggers auto-broadcast to all phones. MEDIUM goes to commander for review. LOW is logged only.</p>'
+        + '<p><strong>Recent Decisions</strong> — history of past AI decisions, most recent first. Click Force AI Adaptation to trigger a new operational analysis.</p>'
+    },
+    adapters: {
+      title: 'Hardware Adapters',
+      body: '<p>Status of the three USB WiFi radio adapters and the LLM backend.</p>'
+        + '<p><strong>wlan1 (drone)</strong> — the drone-mounted radio adapter that emits sync pulses and cover signals.</p>'
+        + '<p><strong>wlan2, wlan3 (ground)</strong> — ground-level radio adapters used by mesh nodes for burst transmission.</p>'
+        + '<p><strong>LLM Backend</strong> — the AI engine. Shows "ConfidentialMind" (sovereign cloud) or "Ollama" (local). When reasoning mode is enabled, the model thinks through its analysis before responding.</p>'
+        + '<p>Status indicators: <strong>✓ OK</strong> = working, <strong>✓ SIM</strong> = simulated (no real hardware), <strong>⚠ DEG</strong> = degraded, <strong>✕ ERR</strong> = error.</p>'
+        + '<p>When RADIO_ENABLED=true in .env, the server spawns the Rust radio bridge binary and communicates via JSON-lines over stdin/stdout.</p>'
+    },
+    cycle: {
+      title: 'Burst Cycle Control',
+      body: '<p>The fundamental time unit of the system. Each cycle (default 1 second) has four phases:</p>'
+        + '<p><strong>SYNC-α</strong> (0ms) — Drone emits timing pulse. All ground nodes passively receive and synchronize.</p>'
+        + '<p><strong>PREP</strong> (15ms) — Nodes that have data to send prepare their transmission slot.</p>'
+        + '<p><strong>SYNC-β + BURST</strong> (215ms) — The actual transmission window. Sub-50ms burst. Frequency-hopped across the band. Drone cover signal masks ground emissions.</p>'
+        + '<p><strong>IDLE</strong> (265ms→1000ms) — Radio silence until next cycle.</p>'
+        + '<p><strong>Period selector</strong> — change the cycle speed. 250ms (fast) for rapid demo, 5000ms (slow) for explanation. The phase sub-offsets scale proportionally.</p>'
+        + '<p><strong>Active Patterns</strong> — shows which deception wave patterns are currently running. Patterns control which decoy emitters transmit each cycle.</p>'
+    },
   };
 
   var helpModal = document.getElementById('help-modal');
