@@ -37,6 +37,21 @@ body {
   line-height: 1.1;
 }
 
+.ghost-o {
+  position: relative;
+  display: inline-block;
+  left: -0.07em;
+  color: rgba(130, 210, 230, 0.5);
+}
+
+.ghost-o::after {
+  content: 'O';
+  position: absolute;
+  left: 0.15em;
+  top: 0;
+  color: rgba(130, 210, 230, 0.5);
+}
+
 .tagline {
   font-size: 1.125rem;
   color: var(--text-secondary);
@@ -62,6 +77,7 @@ body {
 
 .hero-visual {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -70,6 +86,16 @@ body {
   width: 100%;
   max-width: 400px;
   height: auto;
+}
+
+.visual-caption {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  margin: var(--space-2) 0 0;
+  text-align: center;
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 /* --- CTA section --- */

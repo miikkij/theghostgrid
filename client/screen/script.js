@@ -654,12 +654,13 @@ if (isMock) {
       });
       socket.on('demo_step', function(data) {
         pulse.push('demo', 0.6);
+        var narrator = document.getElementById('pitch-narrator');
         var banner = document.getElementById('pitch-banner');
-        if (banner && data && data.message) {
+        if (narrator && banner && data && data.message) {
           banner.textContent = data.message;
-          banner.classList.remove('hidden');
-          clearTimeout(banner._timer);
-          banner._timer = setTimeout(function() { banner.classList.add('hidden'); }, 8000);
+          narrator.classList.remove('hidden');
+          clearTimeout(narrator._timer);
+          narrator._timer = setTimeout(function() { narrator.classList.add('hidden'); }, 8000);
         }
       });
       socket.on('scenario_triggered', function() { pulse.push('scenario', 0.5); });
@@ -675,7 +676,7 @@ if (isMock) {
 
     // Listen for pitch completion to restore UI
     socket.on('demo_step', function (data) {
-      if (data && data.message && data.message.indexOf('anchored in a sync beacon') >= 0) {
+      if (data && data.message && data.message.indexOf('Sync on fiber') >= 0) {
         document.body.classList.remove('pitch-active');
       }
     });

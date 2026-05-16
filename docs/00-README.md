@@ -1,4 +1,4 @@
-# Tactical Mesh — Drone-Coordinated Resilient Communications
+# The Ghost Grid — Drone-Coordinated Resilient Communications
 
 ## Core concept: the sync beacon
 

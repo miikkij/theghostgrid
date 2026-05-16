@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tactical Mesh — Operator Display</title>
+  <title>The Ghost Grid — Operator Display</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -64,8 +64,11 @@
       <div class="pitch-countdown-sub">GET READY</div>
     </div>
 
-    <!-- Pitch step banner — at bottom control level -->
-    <div id="pitch-banner" class="pitch-banner hidden"></div>
+    <!-- Pitch narrator — soldier character + speech bubble -->
+    <div id="pitch-narrator" class="pitch-narrator hidden">
+      <div id="pitch-banner" class="pitch-speech"></div>
+      <img src="/static/assets/winter_soldier.png" class="pitch-soldier" alt="">
+    </div>
 
     <!-- Legend + FPS — bottom-right -->
     <div id="fps-counter" class="overlay-panel bottom-right mono">

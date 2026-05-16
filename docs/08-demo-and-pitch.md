@@ -112,7 +112,7 @@ The big-screen audit panel shows the AI's reasoning: "Detected: artillery batter
 
 Pause. Let it land.
 
-> "The architecture is anchored in a sync beacon you cannot jam. Everything else is built on that. Thank you."
+> "Sync on fiber. Beyond jamming. Beyond reach. The rest of the system runs because of that single fact. Thank you."
 
 ## Demo state preparation
 

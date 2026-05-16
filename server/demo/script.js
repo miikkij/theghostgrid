@@ -61,7 +61,7 @@ function buildSteps() {
     { t: 240, fn: () => { dispatch('request_sitrep', {}); broadcastStep('Final SITREP — rings snap to soldiers, HQ picture complete'); }},
     { t: 260, fn: () => { popSettings({ movementEnabled: false, txEnabled: false }); broadcastStep('Architecture proven — sync beacon anchors everything'); }},
     { t: 270, fn: () => { dispatch('reset_state', {}); dispatch('resume_cycles', {}); }},
-    { t: 300, fn: () => { broadcastStep('The architecture is anchored in a sync beacon you cannot jam. Everything else is built on that.'); _running = false; log.info('===== FULL PITCH SEQUENCE COMPLETE ====='); }},
+    { t: 300, fn: () => { broadcastStep('Sync on fiber. Beyond jamming. Beyond reach. The rest of the system runs because of that single fact.'); _running = false; log.info('===== FULL PITCH SEQUENCE COMPLETE ====='); }},
   ];
 }
 

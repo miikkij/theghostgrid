@@ -1,4 +1,4 @@
-# Tactical Mesh
+# The Ghost Grid
 
 Drone-coordinated resilient tactical mesh communications — proof of concept.
 

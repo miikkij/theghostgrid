@@ -160,6 +160,22 @@ function onBurst() {
           pos.y = clamp(pos.y + (dy / dist2) * speed + (Math.random() - 0.5) * speed * 0.3, 0.08, 0.85);
         }
       }
+
+      // Repel from nearby squad members to prevent overlap
+      var minDist = 0.025;
+      for (var si = 0; si < _spawned.length; si++) {
+        if (_spawned[si] === callsign) continue;
+        var other = state.get('nodes.' + _spawned[si]);
+        if (!other || !other.position) continue;
+        var rdx = pos.x - other.position.x;
+        var rdy = pos.y - other.position.y;
+        var rd = Math.sqrt(rdx * rdx + rdy * rdy);
+        if (rd < minDist && rd > 0.001) {
+          pos.x = clamp(pos.x + (rdx / rd) * 0.005, 0.08, 0.92);
+          pos.y = clamp(pos.y + (rdy / rd) * 0.005, 0.08, 0.85);
+        }
+      }
+
       state.set(`nodes.${callsign}.position`, pos);
     }
 
