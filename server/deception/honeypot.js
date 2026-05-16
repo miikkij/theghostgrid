@@ -93,7 +93,7 @@ function trigger(nodeId, eventType, eventData) {
   };
 
   const cycleNumber = _state ? _state.get('cycle.number') || 0 : 0;
-  const masterSecret = 'tactical-mesh-default-secret-change-me';
+  const masterSecret = require('../config').protocol.master_secret;
   const cycleKey = cryptoUtils.deriveCycleKey(masterSecret, cycleNumber);
   const slot = cryptoUtils.deriveSlot(cycleKey, nodeId);
 

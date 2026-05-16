@@ -14,7 +14,10 @@ module.exports = {
     period_ms: parseInt(process.env.BURST_CYCLE_MS) || 1000,
     sync_alpha_offset_ms: parseInt(process.env.SYNC_ALPHA_OFFSET_MS) || 0,
     sync_beta_offset_ms: parseInt(process.env.SYNC_BETA_OFFSET_MS) || 215,
-    burst_window_ms: parseInt(process.env.BURST_WINDOW_MS) || 300,
+    burst_window_ms: parseInt(process.env.BURST_WINDOW_MS) || 50,
+  },
+  protocol: {
+    master_secret: process.env.MASTER_SECRET || 'tactical-mesh-default-secret-change-me',
   },
   radio: {
     drone_iface: process.env.RADIO_DRONE_IFACE || 'wlan1',

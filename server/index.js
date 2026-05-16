@@ -9,14 +9,21 @@ const { attachWebSocket } = require('./websocket');
 const { initRouter } = require('./router');
 const { initPhoneSim } = require('./phone_sim');
 const { initHealthMonitor } = require('./health_monitor');
+const scenarios = require('./demo/scenarios');
+const hqBrain = require('./hq_brain');
 
 // --- Cycle ticker ---
 // Fires four phase events per cycle using chained setTimeout to avoid drift.
 
 let cycleTimer = null;
+let cycleRunning = false;
 
 function startCycleTicker() {
+  cycleRunning = true;
+
   function runCycle() {
+    if (!cycleRunning) return;
+
     // Read period dynamically so ops can change it at runtime
     const period = state.get('cycle.period_ms') || config.cycle.period_ms;
     const alphaOffset = config.cycle.sync_alpha_offset_ms;
@@ -40,12 +47,14 @@ function startCycleTicker() {
 
     // Phase 2: PREP
     setTimeout(() => {
+      if (!cycleRunning) return;
       state.set('cycle.phase', 'prep');
       state.emit('cycle.prep', { number: cycleNumber, ts: Date.now() });
     }, prepMs);
 
     // Phase 3: SYNC-beta + BURST
     setTimeout(() => {
+      if (!cycleRunning) return;
       state.set('cycle.phase', 'sync_beta_burst');
       state.set('cycle.last_beta_ts', Date.now());
       state.emit('cycle.sync_beta_burst', { number: cycleNumber, ts: Date.now() });
@@ -53,6 +62,7 @@ function startCycleTicker() {
 
     // Phase 4: IDLE
     setTimeout(() => {
+      if (!cycleRunning) return;
       state.set('cycle.phase', 'idle');
       state.emit('cycle.idle', { number: cycleNumber, ts: Date.now() });
     }, idleMs);
@@ -68,11 +78,15 @@ function startCycleTicker() {
 }
 
 function stopCycleTicker() {
+  cycleRunning = false;
   if (cycleTimer) {
     clearTimeout(cycleTimer);
     cycleTimer = null;
   }
 }
+
+// Expose as object for scenario dispatcher
+const cycleTicker = { start: startCycleTicker, stop: stopCycleTicker };
 
 // --- Server lifecycle ---
 
@@ -81,12 +95,13 @@ const server = http.createServer(app);
 attachWebSocket(server);
 initRouter();
 initPhoneSim();
+scenarios.init(state, cycleTicker);
 
 state.set('cycle.period_ms', config.cycle.period_ms);
 
 const { port, host } = config.server;
 
-server.listen(port, host, () => {
+server.listen(port, host, async () => {
   log.info('===========================================');
   log.info('  TACTICAL MESH — Server Core');
   log.info(`  http://${host}:${port}`);
@@ -97,6 +112,22 @@ server.listen(port, host, () => {
 
   startCycleTicker();
   initHealthMonitor();
+
+  // Init HQ Brain (async — selects LLM backend)
+  try {
+    await hqBrain.init(state);
+    log.info('HQ Brain initialized');
+  } catch (err) {
+    log.warn({ err: err.message }, 'HQ Brain init failed — running without AI');
+  }
+
+  // Seed initial drones for visualization
+  if (Object.keys(state.get('drones') || {}).length === 0) {
+    state.set('drones', {
+      'DRONE-1': { position: { x: 0.35, y: 0.15 }, status: 'active', role: 'sync' },
+      'DRONE-2': { position: { x: 0.65, y: 0.12 }, status: 'active', role: 'sync' },
+    });
+  }
 });
 
 // --- Graceful shutdown ---

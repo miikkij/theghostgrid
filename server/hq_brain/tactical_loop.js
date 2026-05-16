@@ -168,13 +168,20 @@ function assembleContext(event) {
 }
 
 function normalizeResponse(raw) {
+  let urgency = ['HIGH', 'MEDIUM', 'LOW'].includes(raw.urgency) ? raw.urgency : 'LOW';
+  const confidence = typeof raw.confidence === 'number' ? Math.max(0, Math.min(1, raw.confidence)) : 0.5;
+
+  // Enforce confidence-based downgrade: low-confidence HIGH decisions become MEDIUM
+  if (confidence < 0.5 && urgency === 'HIGH') urgency = 'MEDIUM';
+  if (confidence < 0.3 && urgency === 'MEDIUM') urgency = 'LOW';
+
   return {
-    urgency: ['HIGH', 'MEDIUM', 'LOW'].includes(raw.urgency) ? raw.urgency : 'LOW',
+    urgency,
     classification: raw.classification || 'unknown',
     affected_area: raw.affected_area || { center: { x: 0.5, y: 0.5 }, radius: 0.1 },
     broadcast_content: typeof raw.broadcast_content === 'string' ? raw.broadcast_content : null,
     reasoning: raw.reasoning || 'No reasoning provided',
-    confidence: typeof raw.confidence === 'number' ? Math.max(0, Math.min(1, raw.confidence)) : 0.5,
+    confidence,
   };
 }
 

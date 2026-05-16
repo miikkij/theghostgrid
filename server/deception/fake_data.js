@@ -39,7 +39,7 @@ function generatePayload(nodeId, cycleNumber, strategy) {
 }
 
 function generateEncryptedNoise(nodeId, cycleNumber) {
-  const cycleKey = cryptoUtils.deriveCycleKey('tactical-mesh-default-secret-change-me', cycleNumber);
+  const cycleKey = cryptoUtils.deriveCycleKey(require('../config').protocol.master_secret, cycleNumber);
   const plainNoise = crypto.randomBytes(PAYLOAD_SIZE);
   const { ciphertext, nonce, tag } = cryptoUtils.encrypt(plainNoise, cycleKey);
   return {

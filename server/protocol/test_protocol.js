@@ -108,8 +108,8 @@ function testCrypto() {
   assert(cryptoUtils.verifyMac(data, key1, macVal), 'MAC verification succeeds');
   assert(!cryptoUtils.verifyMac(Buffer.from('wrong'), key1, macVal), 'MAC rejects wrong data');
 
-  const hops = cryptoUtils.deriveHopSequence(secret, 'N1', 1, 5, [1, 6, 11], 3);
-  assert(hops.length === 3, `Hop sequence has 3 entries: got ${hops.length}`);
+  const hops = cryptoUtils.deriveHopSequence(secret, 'N1', 1, 5, [1, 6, 11], 10);
+  assert(hops.length === 10, `Hop sequence has 10 entries: got ${hops.length}`);
   assert(hops.every((h) => [1, 6, 11].includes(h)), 'All hops are valid channels');
 }
 
@@ -187,7 +187,7 @@ function testTransmission() {
     for (const id of nodeIds) {
       const { slotIndex, frequencyHops } = transmission.allocateSlot(id, cycle);
       assert(slotIndex >= 0 && slotIndex < 50, `Cycle ${cycle} ${id}: slot ${slotIndex} in range`);
-      assert(frequencyHops.length === 3, `Cycle ${cycle} ${id}: 3 frequency hops`);
+      assert(frequencyHops.length === 10, `Cycle ${cycle} ${id}: 10 frequency hops`);
       slots.add(`${id}:${slotIndex}`);
     }
     slotsPerCycle.set(cycle, slots);
@@ -233,7 +233,7 @@ function testTransmission() {
   assert(coverFill.mac !== undefined, 'Cover-fill frame also has MAC');
 
   const hops = transmission.getHopSequence('N1', 1, 5);
-  assert(Array.isArray(hops) && hops.length === 3, 'getHopSequence returns array of 3');
+  assert(Array.isArray(hops) && hops.length === 10, 'getHopSequence returns array of 10');
 }
 
 // ---------------------------------------------------------------------------

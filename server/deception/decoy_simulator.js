@@ -6,7 +6,7 @@ const wavePatterns = require('./wave_patterns');
 const fakeData = require('./fake_data');
 const honeypot = require('./honeypot');
 
-const MASTER_SECRET = 'tactical-mesh-default-secret-change-me';
+const MASTER_SECRET = require('../config').protocol.master_secret;
 
 const NODE_STATES = {
   LISTENING: 'LISTENING',

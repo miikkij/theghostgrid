@@ -3,11 +3,13 @@
 const cryptoUtils = require('./crypto');
 const frame = require('./frame');
 
+const serverConfig = require('../config');
+
 const DEFAULTS = {
-  MASTER_SECRET: 'tactical-mesh-default-secret-change-me',
+  MASTER_SECRET: serverConfig.protocol.master_secret,
   SUB_SLOTS: 50,
   CHANNELS: [1, 6, 11],
-  HOPS_PER_SLOT: 3,
+  HOPS_PER_SLOT: 10,
 };
 
 let _state = null;
