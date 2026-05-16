@@ -238,6 +238,10 @@
         if (trigger) Controls.setPatternActive(trigger, true);
       }
     }
+    // Restore decoy-dependent buttons if decoys exist in snapshot
+    if (data.nodes) {
+      Controls.setDecoysActive(hasDecoys());
+    }
     if (data.cm_reasoning_enabled != null) {
       state._reasoningConfigured = true;
       state._reasoningEnabled = data.cm_reasoning_enabled;

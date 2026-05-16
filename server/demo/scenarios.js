@@ -129,6 +129,12 @@ const HANDLERS = {
 
   activate_pattern(params) {
     const name = params.patternName || params.name || 'linear_translation';
+    // Don't activate if same pattern type is already active
+    const existing = deception.getActivePatterns().find((p) => p.name === name);
+    if (existing) {
+      log.info({ patternName: name }, 'pattern already active, skipping');
+      return;
+    }
     const patternParams = params.parameters || getDefaultPatternParams(name);
     const id = deception.activatePattern(name, patternParams);
     log.info({ patternName: name, patternId: id }, 'pattern activated');
