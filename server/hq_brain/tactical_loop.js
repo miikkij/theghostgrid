@@ -200,4 +200,6 @@ function reset() {
   llmClient = null;
 }
 
-module.exports = { init, processEvent, enqueue, getQueueDepth, reset };
+function setClient(client) { llmClient = client; }
+
+module.exports = { init, processEvent, enqueue, getQueueDepth, reset, setClient };

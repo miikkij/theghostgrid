@@ -140,4 +140,6 @@ function reset() {
   llmClient = null;
 }
 
-module.exports = { init, runOperationalCycle, reset };
+function setClient(client) { llmClient = client; }
+
+module.exports = { init, runOperationalCycle, reset, setClient };

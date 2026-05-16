@@ -31,6 +31,7 @@ async function selectClient() {
 
 function createDegradedClient() {
   return {
+    _degraded: true,
     async chat() {
       return {
         urgency: 'LOW',
@@ -68,6 +69,19 @@ async function init(stateRef) {
       priority: broadcast.priority,
     });
   });
+
+  // Retry LLM backend selection every 30s if stuck in degraded mode
+  setInterval(async () => {
+    if (activeClient && activeClient._degraded) {
+      const newClient = await selectClient();
+      if (!newClient._degraded) {
+        activeClient = newClient;
+        tacticalLoop.setClient(newClient);
+        operationalLoop.setClient(newClient);
+        log.info('LLM backend recovered from degraded mode');
+      }
+    }
+  }, 30000);
 
   log.info('HQ Brain initialized');
 }

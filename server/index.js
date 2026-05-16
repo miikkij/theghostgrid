@@ -22,6 +22,7 @@ let cycleTimer = null;
 let cycleRunning = false;
 
 function startCycleTicker() {
+  if (cycleRunning) return;
   cycleRunning = true;
 
   function runCycle() {

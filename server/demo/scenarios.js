@@ -171,23 +171,21 @@ const HANDLERS = {
   },
 
   pause_cycles() {
-    if (_cycleTicker && _cycleTicker.stop) {
-      _cycleTicker.stop();
-      _state.set('cycle.phase', 'paused');
-      _state.broadcast('cycle_tick', {
-        number: _state.get('cycle.number'),
-        phase: 'paused',
-        ts: Date.now(),
-      });
-      log.info('cycles paused');
-    }
+    if (!_cycleTicker) return;
+    _cycleTicker.stop();
+    _state.set('cycle.phase', 'paused');
+    _state.broadcast('cycle_tick', {
+      number: _state.get('cycle.number'),
+      phase: 'paused',
+      ts: Date.now(),
+    });
+    log.info('cycles paused');
   },
 
   resume_cycles() {
-    if (_cycleTicker && _cycleTicker.start) {
-      _cycleTicker.start();
-      log.info('cycles resumed');
-    }
+    if (!_cycleTicker) return;
+    _cycleTicker.start();
+    log.info('cycles resumed');
   },
 
   reset_state() {
