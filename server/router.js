@@ -144,7 +144,14 @@ function initRouter() {
     state.broadcastTo('ops', 'ai_decision', data);
   });
 
-  // Forward transmission arcs to screen and count packets
+  // Count packets from all frame event sources:
+  // - frame_to_send: protocol module composed a frame (slot allocation path)
+  // - frame_transmitted: phone_sim / decoy_sim generated a transmission
+  // - frame_received: incoming frame parsed successfully
+  state.on('transmission.frame_to_send', () => {
+    state.set('stats.packets_total', (state.get('stats.packets_total') || 0) + 1);
+  });
+
   state.on('transmission.frame_transmitted', (data) => {
     state.set('stats.packets_total', (state.get('stats.packets_total') || 0) + 1);
     state.broadcastTo('screen', 'transmission_arc', data);
