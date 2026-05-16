@@ -152,6 +152,30 @@ Deeper spec compliance and robustness. Do if time allows.
 
 ---
 
+## Phase 4: Population Simulator
+
+Server-side virtual node population for a realistic demo without 30 actual phones.
+
+### 4.1 — Virtual node simulator
+- [ ] Create `server/demo/population.js`
+- [ ] On startup (or on `activate_decoys` / explicit trigger), spawn 30 virtual soldier nodes
+- [ ] Spread positions realistically across the operational area (grid/cluster patterns, not pure random)
+- [ ] Register each as a real node in `state.nodes` with `type: 'soldier'`, unique NATO callsigns
+- [ ] Subscribe to cycle events — walk each virtual node through SYNC → TX/RX → LISTENING (same as `phone_sim.js`)
+- [ ] Compute neighbor tables by proximity, generate transmission events between virtual nodes
+- [ ] Virtual nodes appear on big screen and ops minimap identically to real phone nodes
+- [ ] Support configurable count via `NUM_SIMULATED_SOLDIERS` env var (default 30)
+- [ ] Wire into `server/index.js` — activate on startup or via scenario trigger
+- [ ] **Test:** start server → big screen shows 30+ labeled nodes with fiber tethers, state transitions, transmission arcs
+
+### 4.2 — Population dynamics
+- [ ] Some virtual nodes occasionally get jammed and recover (ambient threat simulation)
+- [ ] Virtual nodes generate realistic traffic patterns (not all TX at the same time)
+- [ ] Transmission arcs visible on big screen between virtual nodes during burst windows
+- [ ] **Test:** big screen looks alive with mesh activity without any real phones connected
+
+---
+
 ## Out of Scope (Post-hackathon / P1 functionality)
 
 These are documented for completeness but not planned for implementation now:
