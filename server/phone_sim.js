@@ -8,6 +8,30 @@ const log = require('./log').child({ component: 'phone_sim' });
 // pulse and listen. Decoys handle the cover traffic.
 const SOLDIER_TX_PROBABILITY = 0.15;
 
+const RANKS = ['PVT', 'CPL', 'SGT', 'LT', '1LT', 'CPT'];
+
+// Message types soldiers can send, weighted by frequency
+const TX_MSG_TYPES = [
+  { type: 'POS',     weight: 5, label: 'Position report' },
+  { type: 'STATUS',  weight: 3, label: 'Status update' },
+  { type: 'ACK',     weight: 2, label: 'Acknowledge order' },
+  { type: 'CONTACT', weight: 1, label: 'Contact report' },
+  { type: 'CASEVAC', weight: 0.3, label: 'Casualty evacuation' },
+  { type: 'FIRE',    weight: 0.2, label: 'Fire mission request' },
+  { type: 'RELAY',   weight: 2, label: 'Relay message' },
+];
+
+const TX_TOTAL_WEIGHT = TX_MSG_TYPES.reduce((s, m) => s + m.weight, 0);
+
+function pickMessageType() {
+  var r = Math.random() * TX_TOTAL_WEIGHT;
+  for (var m of TX_MSG_TYPES) {
+    r -= m.weight;
+    if (r <= 0) return m;
+  }
+  return TX_MSG_TYPES[0];
+}
+
 function getPhoneNodes() {
   const nodes = state.get('nodes') || {};
   return Object.entries(nodes).filter(([, n]) => n.type === 'soldier' && n.state !== 'DEAD');
@@ -85,27 +109,39 @@ function initPhoneSim() {
 
       // Only TX soldiers generate transmission arcs and events
       if (txThisCycle.has(callsign) && neighbors.length > 0) {
+        var msg = pickMessageType();
         var partner = neighbors[Math.floor(Math.random() * neighbors.length)];
+        // Urgent messages route to HQ via drone
+        var dest = (msg.type === 'CONTACT' || msg.type === 'CASEVAC' || msg.type === 'FIRE')
+          ? 'HQ' : partner;
+
         state.broadcastTo('phone', 'phone.event', {
           callsign,
           ts: Date.now(),
           direction: 'out',
-          partner,
+          partner: dest,
+          msgType: msg.type,
+          msgLabel: msg.label,
         });
-        // Visible arc on big screen
         state.emit('transmission.frame_transmitted', {
           from: callsign,
-          to: partner,
+          to: dest === 'HQ' ? partner : dest,
           cycle: state.get('cycle.number'),
+          msgType: msg.type,
         });
+
+        // Update unit record in state
+        updateUnitRecord(callsign, nodeData, msg.type);
+
       } else if (neighbors.length > 0) {
-        // RX soldiers receive data passively
         var sender = neighbors[Math.floor(Math.random() * neighbors.length)];
         state.broadcastTo('phone', 'phone.event', {
           callsign,
           ts: Date.now(),
           direction: 'in',
           partner: sender,
+          msgType: 'RX',
+          msgLabel: 'Received data',
         });
       }
     }
@@ -145,7 +181,54 @@ function initPhoneSim() {
     }, 3000);
   });
 
+  // HQ info request — triggers all soldiers to send STATUS next cycle
+  state.on('ops.trigger_scenario', (data) => {
+    if (data.scenario === 'request_sitrep') {
+      var phones = getPhoneNodes();
+      for (var [callsign] of phones) {
+        txThisCycle.add(callsign);
+        state.set(`nodes.${callsign}.state`, 'TX');
+        state.broadcastTo('phone', 'node_state_change', { callsign, state: 'TX' });
+      }
+      log.info({ count: phones.length }, 'SITREP requested — all units responding');
+    }
+  });
+
   log.info('phone simulation initialized');
+}
+
+function updateUnitRecord(callsign, nodeData, msgType) {
+  var units = state.get('units') || {};
+  if (!units[callsign]) {
+    units[callsign] = {
+      callsign,
+      rank: RANKS[Math.floor(Math.random() * RANKS.length)],
+      role: nodeData.role || 'RECON',
+      status: 'NOMINAL',
+      lastReport: null,
+      lastMsgType: null,
+      position: nodeData.position,
+      battery: 70 + Math.floor(Math.random() * 30),
+      ammo: 60 + Math.floor(Math.random() * 40),
+    };
+  }
+
+  var unit = units[callsign];
+  unit.lastReport = Date.now();
+  unit.lastMsgType = msgType;
+  unit.position = nodeData.position;
+
+  if (msgType === 'STATUS') {
+    unit.battery = Math.max(10, unit.battery - Math.floor(Math.random() * 3));
+    unit.ammo = Math.max(5, unit.ammo - Math.floor(Math.random() * 5));
+  }
+  if (msgType === 'CONTACT') unit.status = 'CONTACT';
+  else if (msgType === 'CASEVAC') unit.status = 'CASEVAC';
+  else unit.status = 'NOMINAL';
+
+  units[callsign] = unit;
+  state.set('units', units);
+  state.broadcastTo('ops', 'unit_update', unit);
 }
 
 module.exports = { initPhoneSim };

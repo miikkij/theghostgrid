@@ -343,6 +343,20 @@ body {
   flex-shrink: 0;
 }
 
+.event-msg-type {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--accent-cyan);
+  margin-right: var(--space-1);
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+
 .event-direction.outbound { color: var(--accent-amber); }
 .event-direction.inbound { color: var(--accent-green); }
 

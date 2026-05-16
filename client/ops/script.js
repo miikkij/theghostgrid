@@ -23,6 +23,7 @@
     ai_history: [],
     adapters: {},
     active_patterns: [],
+    units: {},
     connected: false,
     paused: false,
   };
@@ -39,6 +40,7 @@
     systemLabel: document.querySelector('[data-system-label]'),
     minimapCanvas: document.getElementById('minimap-canvas'),
     eventLogContent: document.querySelector('.event-log-content'),
+    unitsContent: document.querySelector('.units-content'),
     aiContent: document.querySelector('.ai-content'),
     aiHistoryList: document.querySelector('.ai-history-list'),
     patternsList: document.querySelector('.patterns-list'),
@@ -162,6 +164,12 @@
       });
     });
 
+    sock.on('unit_update', function (unit) {
+      if (!state.units) state.units = {};
+      state.units[unit.callsign] = unit;
+      renderUnits();
+    });
+
     sock.on('connect', function () {
       state.connected = true;
       state.active_patterns = [];
@@ -224,6 +232,10 @@
         var trigger = patternNameToTrigger(data.active_patterns[pi].patternName || data.active_patterns[pi].name);
         if (trigger) Controls.setPatternActive(trigger, true);
       }
+    }
+    if (data.units) {
+      state.units = data.units;
+      renderUnits();
     }
     // Restore event log from server buffer on reconnect
     if (data.recent_events && data.recent_events.length > 0) {
@@ -568,6 +580,73 @@
       buttons[i].disabled = !enabled;
     }
   }
+
+  // --- Units panel ---
+
+  function renderUnits() {
+    if (!dom.unitsContent) return;
+    var ids = Object.keys(state.units || {}).sort();
+    if (ids.length === 0) {
+      dom.unitsContent.innerHTML = '<div style="color:var(--text-muted);padding:8px;">No unit reports received</div>';
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < ids.length; i++) {
+      var u = state.units[ids[i]];
+      var row = document.createElement('div');
+      row.className = 'unit-row';
+
+      var cs = document.createElement('span');
+      cs.className = 'unit-callsign';
+      cs.textContent = u.callsign;
+
+      var rank = document.createElement('span');
+      rank.className = 'unit-rank';
+      rank.textContent = u.rank || '';
+
+      var role = document.createElement('span');
+      role.className = 'unit-role';
+      role.textContent = u.role || '';
+
+      var status = document.createElement('span');
+      var st = (u.status || 'NOMINAL').toLowerCase();
+      status.className = 'unit-status ' + st;
+      status.textContent = u.status || 'NOMINAL';
+
+      var msg = document.createElement('span');
+      msg.className = 'unit-msg';
+      msg.textContent = u.lastMsgType || '';
+
+      var detail = document.createElement('span');
+      detail.className = 'unit-detail';
+      var parts = [];
+      if (u.battery != null) parts.push('⚡' + u.battery + '%');
+      if (u.ammo != null) parts.push('◆' + u.ammo + '%');
+      if (u.lastReport) parts.push(formatTime(u.lastReport));
+      detail.textContent = parts.join('  ');
+
+      row.appendChild(cs);
+      row.appendChild(rank);
+      row.appendChild(role);
+      row.appendChild(status);
+      row.appendChild(msg);
+      row.appendChild(detail);
+      frag.appendChild(row);
+    }
+    dom.unitsContent.innerHTML = '';
+    dom.unitsContent.appendChild(frag);
+  }
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function (c) { c.classList.remove('active'); });
+      btn.classList.add('active');
+      var tab = document.getElementById('tab-' + btn.dataset.tab);
+      if (tab) tab.classList.add('active');
+    });
+  });
 
   function hasDecoys() {
     for (var id in state.nodes) {

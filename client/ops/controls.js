@@ -115,10 +115,11 @@ var Controls = (function () {
     },
 
     trigger_ai_adaptation: function () {
-      socket.emit('ops.trigger_scenario', {
-        scenario: 'trigger_ai_adaptation',
-        parameters: {},
-      });
+      socket.emit('ops.trigger_scenario', { scenario: 'trigger_ai_adaptation', parameters: {} });
+    },
+
+    request_sitrep: function () {
+      socket.emit('ops.trigger_scenario', { scenario: 'request_sitrep', parameters: {} });
     },
 
     pause_cycles: function () {

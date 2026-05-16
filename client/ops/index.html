@@ -66,9 +66,12 @@
       </div>
 
       <div class="control-group">
-        <h3>AI</h3>
+        <h3>AI / HQ</h3>
         <button class="btn btn-info" data-trigger="trigger_ai_adaptation">
           <span><i class="ico">⟳</i>Force AI Adaptation</span>
+        </button>
+        <button class="btn btn-info" data-trigger="request_sitrep">
+          <span><i class="ico">📋</i>Request SITREP</span>
         </button>
       </div>
 
@@ -113,9 +116,17 @@
         <canvas id="pulse-canvas" style="width:100%;height:28px;display:block;"></canvas>
       </div>
 
-      <div id="event-log" class="panel">
-        <h2>EVENT LOG</h2>
-        <div class="event-log-content"></div>
+      <div id="log-tabs" class="panel">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="events">EVENT LOG</button>
+          <button class="tab-btn" data-tab="units">UNITS</button>
+        </div>
+        <div class="tab-content active" id="tab-events">
+          <div class="event-log-content"></div>
+        </div>
+        <div class="tab-content" id="tab-units">
+          <div class="units-content"></div>
+        </div>
       </div>
     </section>
 

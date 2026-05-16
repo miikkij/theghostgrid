@@ -121,6 +121,13 @@
       dir.textContent = isOut ? '↑' : '↓';
       li.appendChild(dir);
 
+      if (e.msgType && e.msgType !== 'RX') {
+        var badge = document.createElement('span');
+        badge.className = 'event-msg-type';
+        badge.textContent = e.msgType;
+        li.appendChild(badge);
+      }
+
       if (e.partner) {
         var partner = document.createElement('span');
         partner.className = 'event-partner';
