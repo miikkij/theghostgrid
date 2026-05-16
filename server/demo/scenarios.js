@@ -149,25 +149,32 @@ const HANDLERS = {
   },
 
   trigger_honeypot(params) {
-    const states = deception.getDecoyStates();
-    const honeypots = Object.entries(states).filter(([, s]) => s.type === 'honeypot');
+    // Always spawn a fresh honeypot at a random position so each trigger is visible
+    const pos = {
+      x: 0.2 + Math.random() * 0.6,
+      y: 0.25 + Math.random() * 0.45,
+    };
+    const hpId = deception.spawnHoneypot(pos, ['acoustic', 'vibration']);
 
-    if (honeypots.length === 0) {
-      log.warn('no honeypots registered, spawning one');
-      deception.spawnHoneypot(
-        { x: 0.4 + Math.random() * 0.2, y: 0.3 + Math.random() * 0.3 },
-        ['acoustic', 'vibration']
-      );
-      const newStates = deception.getDecoyStates();
-      const newHp = Object.entries(newStates).filter(([, s]) => s.type === 'honeypot');
-      if (newHp.length === 0) return;
-      deception.triggerHoneypot(newHp[0][0], params.eventType || 'artillery');
-      return;
-    }
+    const eventType = params.eventType || 'artillery';
+    deception.triggerHoneypot(hpId, eventType);
 
-    const [hpId] = honeypots[Math.floor(Math.random() * honeypots.length)];
-    deception.triggerHoneypot(hpId, params.eventType || 'artillery');
-    log.info({ honeypotId: hpId }, 'honeypot triggered');
+    // Push alert to big screen for visual flash
+    const nodeData = _state.get(`nodes.${hpId}`);
+    _state.broadcastTo('screen', 'alert', {
+      nodeId: hpId,
+      caption: `${hpId}: ${eventType} detected — DoA ${Math.floor(180 + Math.random() * 180)}°`,
+    });
+
+    // Push alert to phones
+    _state.emit('alert', {
+      message: 'ARTILLERY INCOMING',
+      meta: `Honeypot ${hpId} — estimated impact 28–45 seconds`,
+      duration_seconds: 15,
+      affected_area: nodeData ? { center: nodeData.position, radius: 0.3 } : null,
+    });
+
+    log.info({ honeypotId: hpId, eventType }, 'honeypot triggered');
   },
 
   pause_cycles() {
