@@ -10,10 +10,11 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
     throw new Error('ConfidentialMind not configured (CM_ENDPOINT / CM_API_KEY missing)');
   }
 
-  const url = endpoint.replace(/\/+$/, '') + '/v1/chat/completions';
+  // OpenAI-compatible: base URL + /chat/completions
+  const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
 
   const body = {
-    model: model || 'llama-3-70b',
+    model: model || 'qwen3-32b',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
@@ -27,7 +28,8 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3000);
+  const timeoutMs = parseInt(process.env.CM_TIMEOUT_MS) || 15000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(url, {
@@ -65,7 +67,8 @@ async function health() {
     return { available: false, reason: 'not configured' };
   }
 
-  const url = endpoint.replace(/\/+$/, '') + '/v1/models';
+  // OpenAI-compatible: base URL + /models
+  const url = endpoint.replace(/\/+$/, '') + '/models';
 
   try {
     const controller = new AbortController();
