@@ -5,24 +5,36 @@ const config = require('./config');
 const log = require('./log').child({ component: 'health' });
 
 const POLL_INTERVAL_MS = 30000;
+let radioBridgeAlive = false;
 
 function initHealthMonitor() {
+  // Detect live radio bridge by listening for frame events
+  state.on('radio.frame_received', () => { radioBridgeAlive = true; });
+  state.on('radio.frame_received_simulated', () => { radioBridgeAlive = true; });
+
   pollAndBroadcast();
   setInterval(pollAndBroadcast, POLL_INTERVAL_MS);
   log.info({ interval_ms: POLL_INTERVAL_MS }, 'health monitor started');
 }
 
 async function pollAndBroadcast() {
-  // Radio adapters — report simulated status when not enabled
-  const radioStatus = config.radio.enabled ? 'ok' : 'ok_simulated';
+  // Radio adapters — detect live bridge, fall back to config flag
+  let radioStatus;
+  if (radioBridgeAlive) {
+    radioStatus = 'ok';
+  } else if (config.radio.enabled) {
+    radioStatus = 'ok';
+  } else {
+    radioStatus = 'ok_simulated';
+  }
   state.broadcastTo('ops', 'adapter_status', { adapter: 'wlan1', status: radioStatus });
   state.broadcastTo('ops', 'adapter_status', { adapter: 'wlan2', status: radioStatus });
   state.broadcastTo('ops', 'adapter_status', { adapter: 'wlan3', status: radioStatus });
 
-  // LLM backend health
+  // LLM backend health — reports which backend is actually responding
   try {
-    const cmStatus = await checkLLMHealth();
-    state.broadcastTo('ops', 'adapter_status', { adapter: 'cm', status: cmStatus });
+    const result = await checkLLMHealth();
+    state.broadcastTo('ops', 'adapter_status', { adapter: 'cm', status: result.status, backend: result.backend });
   } catch (e) {
     log.debug({ err: e.message }, 'LLM health check failed');
     state.broadcastTo('ops', 'adapter_status', { adapter: 'cm', status: 'error' });
@@ -30,7 +42,6 @@ async function pollAndBroadcast() {
 }
 
 async function checkLLMHealth() {
-  // Try ConfidentialMind first
   const cmEndpoint = config.confidentialmind.endpoint;
   const cmKey = config.confidentialmind.api_key;
 
@@ -43,11 +54,10 @@ async function checkLLMHealth() {
         signal: controller.signal,
       });
       clearTimeout(timeout);
-      if (res.ok) return 'ok';
+      if (res.ok) return { status: 'ok', backend: 'confidentialmind' };
     } catch { /* fall through to ollama */ }
   }
 
-  // Try Ollama
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
@@ -55,10 +65,10 @@ async function checkLLMHealth() {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (res.ok) return 'ok';
+    if (res.ok) return { status: 'ok', backend: 'ollama' };
   } catch { /* neither available */ }
 
-  return 'error';
+  return { status: 'error', backend: 'none' };
 }
 
 module.exports = { initHealthMonitor };

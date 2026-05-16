@@ -136,13 +136,16 @@ function initRouter() {
     broadcastEvent('routing', 'Mesh routing converged (cycle ' + (data.cycle || '?') + ')');
   });
 
-  // Generic event broadcaster for the ops event log
+  // Server-side event buffer so ops dashboard survives refresh
+  const MAX_EVENT_BUFFER = 50;
+  const eventBuffer = [];
+
   function broadcastEvent(type, message) {
-    state.broadcastTo('ops', 'event', {
-      type: type,
-      ts: Date.now(),
-      message: message,
-    });
+    const event = { type, ts: Date.now(), message };
+    eventBuffer.unshift(event);
+    if (eventBuffer.length > MAX_EVENT_BUFFER) eventBuffer.length = MAX_EVENT_BUFFER;
+    state.set('recent_events', eventBuffer);
+    state.broadcastTo('ops', 'event', event);
   }
 
   // Broadcast notable node events (joins, deaths)

@@ -108,6 +108,7 @@
 
     sock.on('adapter_status', function (data) {
       state.adapters[data.adapter] = data.status;
+      if (data.backend) state.adapters[data.adapter + '_backend'] = data.backend;
       renderAdapterStatus();
     });
 
@@ -166,6 +167,12 @@
     if (data.active_patterns) {
       state.active_patterns = data.active_patterns;
       renderActivePatterns();
+    }
+    // Restore event log from server buffer on reconnect
+    if (data.recent_events && data.recent_events.length > 0) {
+      for (var i = data.recent_events.length - 1; i >= 0; i--) {
+        addEvent(data.recent_events[i]);
+      }
     }
     updateStatusBar();
   }
@@ -310,9 +317,14 @@
       if (!status) {
         el.textContent = '—';
         el.classList.add('unknown');
-      } else if (status === 'ok') {
-        el.textContent = '✓ OK';
+      } else if (status === 'ok' || status === 'ok_simulated') {
+        el.textContent = status === 'ok_simulated' ? '✓ SIM' : '✓ OK';
         el.classList.add('ok');
+        // Update LLM label to show which backend is active
+        if (ids[i] === 'cm' && state.adapters.cm_backend) {
+          var label = document.querySelector('[data-adapter-label="cm"]');
+          if (label) label.textContent = state.adapters.cm_backend === 'ollama' ? 'Ollama' : 'ConfidentialMind';
+        }
       } else if (status === 'degraded') {
         el.textContent = '⚠ DEG';
         el.classList.add('degraded');
