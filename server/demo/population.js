@@ -18,6 +18,9 @@ const ROLES = ['RECON', 'OPS', 'COMMS', 'MEDIC', 'ENGINEER', 'SNIPER'];
 let _spawned = [];
 let _cycleCounter = 0;
 
+// Squad waypoint system — each squad moves toward a target area
+var _squads = {};  // squadId → { members: [callsign], target: {x,y}, arrived: false }
+
 // Controllable settings — defaults to idle (no arcs, no movement)
 var _settings = {
   movementEnabled: false,
@@ -60,12 +63,22 @@ function init() {
 
 function spawn(count) {
   const startIdx = 100;
+  const numSquads = Math.max(3, Math.ceil(count / 8));
+
+  // Initialize squads with initial targets
+  for (let s = 0; s < numSquads; s++) {
+    _squads[s] = {
+      members: [],
+      target: randomTarget(),
+    };
+  }
 
   for (let i = 0; i < count; i++) {
     const prefix = NATO[i % NATO.length];
     const number = Math.floor(i / NATO.length) + startIdx;
     const callsign = `${prefix}-${number}`;
     const role = ROLES[Math.floor(Math.random() * ROLES.length)];
+    const squadId = i % numSquads;
     const pos = generatePosition(i, count);
 
     state.set(`nodes.${callsign}`, {
@@ -76,12 +89,21 @@ function spawn(count) {
       lastSeen: Date.now(),
       virtual: true,
       role,
+      squad: squadId,
     });
 
     _spawned.push(callsign);
+    _squads[squadId].members.push(callsign);
   }
 
-  log.info({ count: _spawned.length }, 'virtual soldiers spawned');
+  log.info({ count: _spawned.length, squads: numSquads }, 'virtual soldiers spawned');
+}
+
+function randomTarget() {
+  return {
+    x: 0.15 + Math.random() * 0.7,
+    y: 0.15 + Math.random() * 0.6,
+  };
 }
 
 function generatePosition(index, total) {
@@ -114,11 +136,25 @@ function onBurst() {
     const node = state.get(`nodes.${callsign}`);
     if (!node || !node.position || node.state === 'DEAD' || node.state === 'JAMMED') continue;
 
-    // Movement — only if enabled
+    // Movement — squad-based waypoint movement
     if (_settings.movementEnabled) {
+      var squadId = node.squad;
+      var squad = squadId != null ? _squads[squadId] : null;
       var pos = node.position;
-      pos.x = clamp(pos.x + (Math.random() - 0.5) * _settings.movementSpeed, 0.08, 0.92);
-      pos.y = clamp(pos.y + (Math.random() - 0.5) * _settings.movementSpeed, 0.08, 0.85);
+
+      if (squad && squad.target) {
+        // Move toward squad target with some scatter
+        var dx = squad.target.x - pos.x;
+        var dy = squad.target.y - pos.y;
+        var dist2 = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist2 > 0.02) {
+          // Move toward target + slight random wander
+          var speed = _settings.movementSpeed;
+          pos.x = clamp(pos.x + (dx / dist2) * speed + (Math.random() - 0.5) * speed * 0.3, 0.08, 0.92);
+          pos.y = clamp(pos.y + (dy / dist2) * speed + (Math.random() - 0.5) * speed * 0.3, 0.08, 0.85);
+        }
+      }
       state.set(`nodes.${callsign}.position`, pos);
     }
 
@@ -137,6 +173,35 @@ function onBurst() {
         var msgTypes = ['POS', 'STATUS', 'ACK', 'RELAY'];
         var msgType = msgTypes[Math.floor(Math.random() * msgTypes.length)];
         meshViz.injectMessage(callsign, msgType);
+      }
+    }
+  }
+
+  // Check if squads have arrived at their targets — pick new targets
+  if (_settings.movementEnabled) {
+    for (var sid in _squads) {
+      var sq = _squads[sid];
+      if (!sq.target || sq.members.length === 0) continue;
+
+      // Check average distance of squad to target
+      var totalDist = 0;
+      var count = 0;
+      for (var mi = 0; mi < sq.members.length; mi++) {
+        var mn = state.get('nodes.' + sq.members[mi]);
+        if (!mn || !mn.position) continue;
+        var ddx = mn.position.x - sq.target.x;
+        var ddy = mn.position.y - sq.target.y;
+        totalDist += Math.sqrt(ddx * ddx + ddy * ddy);
+        count++;
+      }
+
+      if (count > 0 && totalDist / count < 0.05) {
+        // Squad arrived — pick new target on opposite side
+        sq.target = {
+          x: clamp(1 - sq.target.x + (Math.random() - 0.5) * 0.3, 0.15, 0.85),
+          y: clamp(1 - sq.target.y + (Math.random() - 0.5) * 0.3, 0.15, 0.75),
+        };
+        log.debug({ squad: sid, target: sq.target }, 'squad reached target, new waypoint');
       }
     }
   }
