@@ -145,31 +145,23 @@ var Controls = (function () {
 
     run_full_pitch: function () {
       if (!confirm('Run full 5-minute pitch sequence?')) return;
-      socket.emit('ops.trigger_scenario', {
-        scenario: 'run_full_pitch',
-        parameters: {},
-      });
+      socket.emit('ops.trigger_scenario', { scenario: 'run_full_pitch', parameters: {} });
+      setPitchRunning(true);
     },
 
     pause_pitch: function () {
-      socket.emit('ops.trigger_scenario', {
-        scenario: 'pause_pitch',
-        parameters: {},
-      });
+      socket.emit('ops.trigger_scenario', { scenario: 'pause_pitch', parameters: {} });
+      setPitchState('paused');
     },
 
     resume_pitch: function () {
-      socket.emit('ops.trigger_scenario', {
-        scenario: 'resume_pitch',
-        parameters: {},
-      });
+      socket.emit('ops.trigger_scenario', { scenario: 'resume_pitch', parameters: {} });
+      setPitchState('running');
     },
 
     stop_pitch: function () {
-      socket.emit('ops.trigger_scenario', {
-        scenario: 'stop_pitch',
-        parameters: {},
-      });
+      socket.emit('ops.trigger_scenario', { scenario: 'stop_pitch', parameters: {} });
+      setPitchRunning(false);
     },
   };
 
@@ -268,6 +260,24 @@ var Controls = (function () {
     });
   }
 
+  function setPitchRunning(running) {
+    var pause = document.querySelector('[data-trigger="pause_pitch"]');
+    var resume = document.querySelector('[data-trigger="resume_pitch"]');
+    var stop = document.querySelector('[data-trigger="stop_pitch"]');
+    var run = document.querySelector('[data-trigger="run_full_pitch"]');
+    if (pause) pause.disabled = !running;
+    if (resume) resume.disabled = true;
+    if (stop) stop.disabled = !running;
+    if (run) run.disabled = running;
+  }
+
+  function setPitchState(pitchState) {
+    var pause = document.querySelector('[data-trigger="pause_pitch"]');
+    var resume = document.querySelector('[data-trigger="resume_pitch"]');
+    if (pause) pause.disabled = pitchState !== 'running';
+    if (resume) resume.disabled = pitchState !== 'paused';
+  }
+
   var REQUIRES_DECOYS = ['pattern_linear', 'pattern_convoy', 'pattern_radial'];
 
   function setDecoysActive(active) {
@@ -282,6 +292,7 @@ var Controls = (function () {
     setPaused: setPaused,
     setPatternActive: setPatternActive,
     setDecoysActive: setDecoysActive,
+    setPitchRunning: setPitchRunning,
     resetPatterns: resetPatterns,
     getActivePatterns: function () { return activePatterns; },
   };

@@ -171,6 +171,7 @@
       setControlsEnabled(true);
       Controls.setPaused(false);
       Controls.setDecoysActive(hasDecoys());
+      Controls.setPitchRunning(false);
     });
 
     sock.on('disconnect', function () {

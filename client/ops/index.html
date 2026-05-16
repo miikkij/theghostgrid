@@ -90,13 +90,13 @@
         <button class="btn btn-primary" data-trigger="run_full_pitch">
           <span><i class="ico">▶▶</i>Run Full Pitch (5 min)</span>
         </button>
-        <button class="btn btn-warn" data-trigger="pause_pitch">
+        <button class="btn btn-warn" data-trigger="pause_pitch" disabled>
           <span><i class="ico">⏸</i>Pause Pitch</span>
         </button>
-        <button class="btn btn-info" data-trigger="resume_pitch">
+        <button class="btn btn-info" data-trigger="resume_pitch" disabled>
           <span><i class="ico">▶</i>Continue Pitch</span>
         </button>
-        <button class="btn btn-neutral" data-trigger="stop_pitch">
+        <button class="btn btn-neutral" data-trigger="stop_pitch" disabled>
           <span><i class="ico">■</i>Stop Pitch</span>
         </button>
       </div>
@@ -168,8 +168,6 @@
       </div>
     </section>
   </main>
-
-  <div id="connection-indicator" class="status-dot"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/static/shared/connection.js"></script>
