@@ -54,9 +54,16 @@
       <span class="sim-pulse"></span> SIMULATION ACTIVE
     </div>
 
-    <!-- FPS counter (dev) -->
+    <!-- Legend + FPS — bottom-right -->
     <div id="fps-counter" class="overlay-panel bottom-right mono">
-      <span data-fps>60</span> FPS
+      <div class="legend-line"><span class="legend-dot" style="background:#22D3EE"></span> Soldier node</div>
+      <div class="legend-line"><span class="legend-dot" style="background:#475569"></span> Decoy emitter (€25)</div>
+      <div class="legend-line"><span class="legend-dot" style="background:#FBBF24"></span> Honeypot sensor</div>
+      <div class="legend-line"><span class="legend-dot" style="background:#4ADE80"></span> Sync drone</div>
+      <div class="legend-line"><span class="legend-arc"></span> Sub-50ms burst — indistinguishable real/decoy</div>
+      <div class="legend-line"><span class="legend-dot" style="background:#EF4444"></span> EW jamming zone</div>
+      <div class="legend-sep"></div>
+      <div><span data-fps>60</span> FPS</div>
     </div>
 
 

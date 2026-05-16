@@ -62,11 +62,38 @@ body.cursor-visible {
 }
 
 .overlay-panel.bottom-right {
-  bottom: 24px;
+  bottom: 60px;
   right: 24px;
-  font-size: var(--text-tiny);
+  font-size: 0.625rem;
   color: var(--text-muted);
-  padding: 6px 10px;
+  padding: 8px 12px;
+  line-height: 1.6;
+}
+
+.legend-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-arc {
+  width: 12px;
+  height: 0;
+  border-top: 1.5px solid #22D3EE;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.legend-sep {
+  border-top: 1px solid rgba(42, 52, 71, 0.5);
+  margin: 4px 0;
 }
 
 /* --- Cycle indicator --- */
