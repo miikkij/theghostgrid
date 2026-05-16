@@ -119,6 +119,13 @@ class BattlefieldRenderer {
     ctx.textAlign = 'center';
     ctx.fillText('HQ', x, y + s + 16);
 
+    // Connection indicator dot below HQ label
+    var connected = this._connected !== false;
+    ctx.beginPath();
+    ctx.arc(x, y + s + 26, 4, 0, Math.PI * 2);
+    ctx.fillStyle = connected ? '#4ADE80' : '#EF4444';
+    ctx.fill();
+
     ctx.restore();
   }
 

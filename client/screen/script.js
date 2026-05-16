@@ -197,6 +197,7 @@ function setDisconnected(disconnected) {
   } else {
     overlay.classList.add('hidden');
   }
+  if (renderer) renderer._connected = !disconnected;
 }
 
 // ============================================================
