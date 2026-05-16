@@ -193,24 +193,31 @@
       var pulse = new SystemPulse(pulseCanvas, { height: 28, scrollSpeed: 30, maxAge: 20000 });
       window.addEventListener('resize', function() { pulse._resize(); });
 
+      // Mirror the same event sources as big screen pulse
       sock.on('ai_decision', function() { pulse.push('ai_decision', 0.9); });
+      sock.on('node_state_change', function(data) {
+        if (data.type === 'honeypot') pulse.push('honeypot', 0.75);
+        else if (data.type === 'decoy') pulse.push('deception', 0.3);
+        else if (data.state === 'JAMMED') pulse.push('jamming', 0.7);
+      });
+      sock.on('transmission_arc', function() { pulse.push('burst', 0.15); });
+      sock.on('cycle_tick', function(data) {
+        if (data.phase === 'sync_alpha') pulse.push('cycle', 0.1);
+      });
       sock.on('event', function(ev) {
         var type = ev.type || 'default';
         var intensity = 0.5;
         if (type.indexOf('honeypot') >= 0) { type = 'honeypot'; intensity = 0.8; }
         else if (type.indexOf('jam') >= 0) { type = 'jamming'; intensity = 0.85; }
         else if (type.indexOf('alert') >= 0) { type = 'alert'; intensity = 1.0; }
-        else if (type.indexOf('ai') >= 0) { type = 'ai_decision'; intensity = 0.7; }
-        else if (type.indexOf('node_join') >= 0) { type = 'node_join'; intensity = 0.4; }
         else if (type.indexOf('demo') >= 0) { type = 'demo'; intensity = 0.6; }
-        else if (type.indexOf('routing') >= 0) { type = 'routing'; intensity = 0.3; }
-        else if (type.indexOf('deception') >= 0 || type.indexOf('pattern') >= 0) { type = 'deception'; intensity = 0.5; }
+        else if (type.indexOf('node') >= 0) { type = 'node_join'; intensity = 0.4; }
         pulse.push(type, intensity);
       });
-      sock.on('cycle_tick', function(data) {
-        if (data.phase === 'sync_alpha') pulse.push('cycle', 0.08);
-      });
       sock.on('scenario_result', function() { pulse.push('scenario', 0.5); });
+      sock.on('jamming_zones_update', function(z) { if (z && z.length) pulse.push('jamming', 0.85); });
+      sock.on('drones_update', function() { pulse.push('scenario', 0.5); });
+      sock.on('scenario_triggered', function() { pulse.push('scenario', 0.5); });
     }
   }
 
