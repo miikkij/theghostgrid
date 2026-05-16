@@ -72,8 +72,9 @@ SystemPulse.prototype.push = function (type, intensity) {
     ts: Date.now(),
   });
 
-  // Trim old events
-  var cutoff = Date.now() - this.maxAge;
+  // Trim events that have scrolled off the left edge
+  var maxVisibleMs = (this.width / this.scrollSpeed) * 1000 + 2000;
+  var cutoff = Date.now() - maxVisibleMs;
   while (this.events.length > 0 && this.events[0].ts < cutoff) {
     this.events.shift();
   }
@@ -155,7 +156,6 @@ SystemPulse.prototype._renderFrame = function (now) {
     // Spike line
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
-    ctx.globalAlpha = Math.max(0.3, 1 - age / this.maxAge);
     ctx.beginPath();
     ctx.moveTo(x, by);
     ctx.lineTo(x, by - spikeH);
@@ -173,8 +173,6 @@ SystemPulse.prototype._renderFrame = function (now) {
     ctx.lineTo(x + 2, by + spikeH * 0.15);
     ctx.lineTo(x + 4, by);
     ctx.stroke();
-
-    ctx.globalAlpha = 1;
   }
 
   // Right edge bright line (current moment)
