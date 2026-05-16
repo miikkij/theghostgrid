@@ -10,20 +10,41 @@ const log = require('./log').child({ component: 'router' });
  */
 function initRouter() {
   // Forward cycle phase changes to all WS clients
+  // Include last_alpha_ts and sync_beta_offset_ms so phone clients can compute countdown
   state.on('cycle.sync_alpha', (data) => {
-    state.broadcast('cycle_tick', { ...data, phase: 'sync_alpha' });
+    state.broadcast('cycle_tick', {
+      ...data,
+      phase: 'sync_alpha',
+      last_alpha_ts: data.ts,
+      sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+    });
   });
 
   state.on('cycle.prep', (data) => {
-    state.broadcast('cycle_tick', { ...data, phase: 'prep' });
+    state.broadcast('cycle_tick', {
+      ...data,
+      phase: 'prep',
+      last_alpha_ts: state.get('cycle.last_alpha_ts'),
+      sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+    });
   });
 
   state.on('cycle.sync_beta_burst', (data) => {
-    state.broadcast('cycle_tick', { ...data, phase: 'sync_beta_burst' });
+    state.broadcast('cycle_tick', {
+      ...data,
+      phase: 'sync_beta_burst',
+      last_alpha_ts: state.get('cycle.last_alpha_ts'),
+      sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+    });
   });
 
   state.on('cycle.idle', (data) => {
-    state.broadcast('cycle_tick', { ...data, phase: 'idle' });
+    state.broadcast('cycle_tick', {
+      ...data,
+      phase: 'idle',
+      last_alpha_ts: state.get('cycle.last_alpha_ts'),
+      sync_beta_offset_ms: state.get('cycle.period_ms') || 1000,
+    });
   });
 
   // Forward node state changes to relevant clients

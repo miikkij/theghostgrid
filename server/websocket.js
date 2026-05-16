@@ -62,9 +62,13 @@ function attachWebSocket(httpServer) {
         role: entry.nodeRole,
       });
 
+      // Spread nodes across the operational area (0.15–0.85 range)
+      // avoiding overlap with HQ at bottom-left
+      var px = 0.15 + Math.random() * 0.7;
+      var py = 0.15 + Math.random() * 0.6;
       state.set(`nodes.${entry.callsign}`, {
         type: 'soldier',
-        position: { x: Math.random(), y: Math.random() },
+        position: { x: px, y: py },
         state: 'LISTENING',
         neighbors: [],
         lastSeen: Date.now(),

@@ -7,6 +7,7 @@ const { state } = require('./state');
 const { createApp } = require('./http');
 const { attachWebSocket } = require('./websocket');
 const { initRouter } = require('./router');
+const { initPhoneSim } = require('./phone_sim');
 
 // --- Cycle ticker ---
 // Fires four phase events per cycle using chained setTimeout to avoid drift.
@@ -73,6 +74,7 @@ const app = createApp();
 const server = http.createServer(app);
 attachWebSocket(server);
 initRouter();
+initPhoneSim();
 
 state.set('cycle.period_ms', config.cycle.period_ms);
 

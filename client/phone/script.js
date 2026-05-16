@@ -290,14 +290,16 @@
     }
   });
 
-  // Neighbor updates
+  // Neighbor updates (server broadcasts to all phones; filter by callsign)
   socket.on('phone.neighbors', function (data) {
+    if (data.callsign && data.callsign !== node.callsign) return;
     node.neighbors = data.neighbors || [];
     renderNeighbors();
   });
 
-  // Recent events
+  // Recent events (filter by callsign)
   socket.on('phone.event', function (event) {
+    if (event.callsign && event.callsign !== node.callsign) return;
     node.recentEvents.unshift(event);
     if (node.recentEvents.length > 3) node.recentEvents.length = 3;
     renderEvents();
