@@ -27,6 +27,30 @@ npm run dev   # starts with --watch for auto-reload
 
 ## Radio Bridge (Rust)
 
+Requires **Rust 1.85+** (edition2024 support). Check your version:
+
+```bash
+rustc --version
+```
+
+If you're below 1.85, install or update via [rustup](https://rustup.rs):
+
+```bash
+# Install rustup (if you don't have it)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Or update an existing rustup installation
+rustup update stable
+```
+
+On Windows, if you have an older Rust from Chocolatey alongside rustup, make sure `%USERPROFILE%\.cargo\bin` comes first in your PATH:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+```
+
+Then build and run:
+
 ```bash
 cd radios
 cargo build --release
