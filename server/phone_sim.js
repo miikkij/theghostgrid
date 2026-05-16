@@ -57,6 +57,7 @@ function computeNeighbors(callsign, pos, allNodes) {
 
 // Track which soldiers are TX-ing this cycle
 var txThisCycle = new Set();
+var forcedTx = new Set();
 
 function initPhoneSim() {
   // Phase 1: SYNC — all soldiers receive the drone sync pulse (passive, safe)
@@ -64,6 +65,9 @@ function initPhoneSim() {
     var phones = getPhoneNodes();
     if (phones.length === 0) return;
     txThisCycle.clear();
+    // Carry over forced TX from SITREP or manual send
+    for (var fid of forcedTx) txThisCycle.add(fid);
+    forcedTx.clear();
 
     for (var [callsign] of phones) {
       state.set(`nodes.${callsign}.state`, 'SYNC');
@@ -187,6 +191,15 @@ function initPhoneSim() {
     }, 3000);
   });
 
+  // Manual phone message (POS, STATUS, CONTACT etc.) — force TX and update unit
+  state.on('phone.force_tx', (data) => {
+    forcedTx.add(data.callsign);
+  });
+
+  state.on('phone.unit_report', (data) => {
+    updateUnitRecord(data.callsign, data.nodeData, data.msgType);
+  });
+
   // HQ info request — triggers all soldiers to send STATUS next cycle
   state.on('ops.trigger_scenario', (data) => {
     if (data.scenario === 'request_sitrep') {
@@ -198,7 +211,7 @@ function initPhoneSim() {
         message: 'HQ requests status report from all units',
       });
       for (var [callsign] of phones) {
-        txThisCycle.add(callsign);
+        forcedTx.add(callsign);
         state.set(`nodes.${callsign}.state`, 'TX');
         state.broadcastTo('phone', 'node_state_change', { callsign, state: 'TX' });
       }

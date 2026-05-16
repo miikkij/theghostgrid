@@ -116,7 +116,20 @@ function attachWebSocket(httpServer) {
     });
 
     socket.on('phone.message', (data) => {
-      log.debug({ callsign: data.callsign, type: data.type, dest: data.dest }, 'phone message');
+      const client = clients.get(socket.id);
+      const callsign = data.callsign || (client && client.callsign);
+      if (!callsign) return;
+
+      log.debug({ callsign, type: data.type, dest: data.dest }, 'phone message');
+
+      // Force this soldier to TX on next burst cycle
+      state.emit('phone.force_tx', { callsign, msgType: data.type });
+
+      // Update unit record immediately with current position
+      const nodeData = state.get(`nodes.${callsign}`);
+      if (nodeData) {
+        state.emit('phone.unit_report', { callsign, nodeData, msgType: data.type });
+      }
     });
 
     socket.on('phone.acknowledge', (data) => {
