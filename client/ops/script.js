@@ -176,6 +176,16 @@
       updateStatusBar();
     });
 
+    sock.on('pitch_state', function (data) {
+      if (data.running) {
+        Controls.setPitchRunning(true);
+        if (data.paused) Controls.setPitchState('paused');
+        else Controls.setPitchState('running');
+      } else {
+        Controls.setPitchRunning(false);
+      }
+    });
+
     sock.on('connect', function () {
       state.connected = true;
       state.active_patterns = [];

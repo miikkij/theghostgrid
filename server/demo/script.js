@@ -80,6 +80,7 @@ function start() {
   _startedAt = Date.now();
   _steps = buildSteps();
   log.info('===== FULL PITCH SEQUENCE STARTED =====');
+  _state.broadcast('pitch_state', { running: true, paused: false });
   scheduleRemaining();
 }
 
@@ -89,6 +90,7 @@ function stop() {
   _running = false;
   _paused = false;
   _steps = [];
+  _state.broadcast('pitch_state', { running: false, paused: false });
   broadcastStep('Pitch sequence stopped');
   log.info('pitch sequence stopped');
 }
@@ -98,6 +100,7 @@ function pause() {
   _paused = true;
   _pausedAt = Date.now();
   clearAllTimers();
+  _state.broadcast('pitch_state', { running: true, paused: true });
   broadcastStep('Pitch PAUSED. Press resume to continue.');
   log.info('pitch paused');
 }
@@ -106,6 +109,7 @@ function resume() {
   if (!_running || !_paused) return;
   _pausedElapsed += Date.now() - _pausedAt;
   _paused = false;
+  _state.broadcast('pitch_state', { running: true, paused: false });
   broadcastStep('Pitch RESUMED');
   log.info('pitch resumed');
   scheduleRemaining();
