@@ -115,10 +115,15 @@ function initRouter() {
     state.broadcastTo('ops', 'ai_decision', data);
   });
 
-  // Forward transmission arcs to screen
+  // Forward transmission arcs to screen and count packets
   state.on('transmission.frame_transmitted', (data) => {
+    state.set('stats.packets_total', (state.get('stats.packets_total') || 0) + 1);
     state.broadcastTo('screen', 'transmission_arc', data);
     state.broadcastTo('ops', 'transmission_arc', data);
+  });
+
+  state.on('transmission.frame_received', () => {
+    state.set('stats.packets_total', (state.get('stats.packets_total') || 0) + 1);
   });
 
   // Forward channel hop sequences when burst window opens

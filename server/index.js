@@ -25,8 +25,15 @@ function startCycleTicker() {
   if (cycleRunning) return;
   cycleRunning = true;
 
+  // Track expected fire time to measure real drift
+  let nextExpectedAt = Date.now();
+
   function runCycle() {
     if (!cycleRunning) return;
+
+    const now = Date.now();
+    const drift = now - nextExpectedAt;
+    state.set('stats.sync_drift_ms', Math.abs(drift));
 
     // Read period dynamically so ops can change it at runtime
     const period = state.get('cycle.period_ms') || config.cycle.period_ms;
@@ -41,7 +48,7 @@ function startCycleTicker() {
     const idleMs = (betaOffset + burstWindow) * scale;
 
     const cycleNumber = state.get('cycle.number') + 1;
-    const cycleStart = Date.now();
+    const cycleStart = now;
     state.set('cycle.number', cycleNumber);
 
     // Phase 1: SYNC-alpha at cycle start
@@ -71,9 +78,9 @@ function startCycleTicker() {
       state.emit('cycle.idle', { number: cycleNumber, ts: Date.now() });
     }, idleMs);
 
-    // Schedule next cycle aligned to period
-    const elapsed = Date.now() - cycleStart;
-    const nextDelay = Math.max(0, period - elapsed);
+    // Schedule next cycle aligned to wall clock
+    nextExpectedAt = cycleStart + period;
+    const nextDelay = Math.max(0, nextExpectedAt - Date.now());
     cycleTimer = setTimeout(runCycle, nextDelay);
   }
 
