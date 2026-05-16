@@ -78,69 +78,32 @@ function extractResponse(msg) {
   const content = msg.content;
   const reasoning = msg.reasoning || msg.reasoning_content || msg.thinking;
 
-  // Strategy: try fields in priority order based on USE_REASONING flag
-  var primary = USE_REASONING ? [reasoning, content] : [content, reasoning];
-
-  for (var text of primary) {
-    if (!text) continue;
-
-    // Strip markdown code fences (```json ... ```)
-    var cleaned = text.replace(/^[\s\S]*?```(?:json)?\s*\n?/i, '').replace(/\n?```[\s\S]*$/, '').trim();
+  // Parse JSON from content field only — that's where the answer lives
+  if (content) {
+    // Strip markdown code fences
+    var cleaned = content.replace(/^[\s\S]*?```(?:json)?\s*\n?/i, '').replace(/\n?```[\s\S]*$/, '').trim();
     if (cleaned.startsWith('{')) {
-      try { return JSON.parse(cleaned); } catch { /* not valid after stripping */ }
+      try {
+        var parsed = JSON.parse(cleaned);
+        if (USE_REASONING && reasoning) parsed.thinking = reasoning;
+        return parsed;
+      } catch { /* not valid after stripping */ }
     }
 
-    // Try direct JSON parse on raw text
-    try { return JSON.parse(text); } catch { /* not raw JSON */ }
-
-    // Try extracting JSON object from text
-    var match = text.match(/\{[\s\S]*"urgency"[\s\S]*?\}/);
-    if (match) {
-      try { return JSON.parse(match[0]); } catch { /* malformed */ }
-    }
-
-    // Try extracting any JSON object
-    var anyJson = text.match(/\{[\s\S]*\}/);
-    if (anyJson) {
-      try { return JSON.parse(anyJson[0]); } catch { /* malformed */ }
-    }
+    // Direct parse
+    try {
+      var direct = JSON.parse(content.trim());
+      if (USE_REASONING && reasoning) direct.thinking = reasoning;
+      return direct;
+    } catch { /* not raw JSON */ }
   }
 
-  // Last resort: construct from whatever text we have, preserving full output
-  var bestText = reasoning || content;
-  if (bestText) {
-    log.warn({ textLen: bestText.length }, 'Could not parse JSON — extracting fields from text');
+  log.warn({
+    contentLen: content?.length || 0,
+    reasoningLen: reasoning?.length || 0,
+  }, 'Content field empty or not parseable JSON');
 
-    // Try to extract individual fields from the reasoning text
-    var urgency = 'MEDIUM';
-    var classification = 'ai_analysis';
-    var confidence = 0.6;
-    var broadcastContent = null;
-
-    var urgMatch = bestText.match(/urgency["\s:]+["']?(HIGH|MEDIUM|LOW)/i);
-    if (urgMatch) urgency = urgMatch[1].toUpperCase();
-
-    var classMatch = bestText.match(/classification["\s:]+["']?([a-z_]+)/i);
-    if (classMatch) classification = classMatch[1];
-
-    var confMatch = bestText.match(/confidence["\s:]+(\d+\.?\d*)/i);
-    if (confMatch) confidence = parseFloat(confMatch[1]);
-    if (confidence > 1) confidence = confidence / 100;
-
-    var broadcastMatch = bestText.match(/broadcast_content["\s:]+["']([^"']+)/i);
-    if (broadcastMatch) broadcastContent = broadcastMatch[1];
-
-    return {
-      urgency,
-      classification,
-      confidence: Math.max(0, Math.min(1, confidence)),
-      reasoning: bestText,
-      broadcast_content: broadcastContent,
-      affected_area: { center: { x: 0.5, y: 0.5 }, radius: 0.15 },
-    };
-  }
-
-  throw new Error('ConfidentialMind returned empty response');
+  throw new Error('ConfidentialMind returned no parseable content');
 }
 
 async function health() {
