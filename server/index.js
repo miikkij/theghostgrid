@@ -8,6 +8,7 @@ const { createApp } = require('./http');
 const { attachWebSocket } = require('./websocket');
 const { initRouter } = require('./router');
 const { initPhoneSim } = require('./phone_sim');
+const { initHealthMonitor } = require('./health_monitor');
 
 // --- Cycle ticker ---
 // Fires four phase events per cycle using chained setTimeout to avoid drift.
@@ -15,14 +16,19 @@ const { initPhoneSim } = require('./phone_sim');
 let cycleTimer = null;
 
 function startCycleTicker() {
-  const { period_ms, sync_alpha_offset_ms, sync_beta_offset_ms, burst_window_ms } = config.cycle;
-
-  // Phase offsets within one cycle (relative to cycle start)
-  const prepOffset = sync_alpha_offset_ms + 15;
-  const betaBurstOffset = sync_beta_offset_ms;
-  const idleOffset = sync_beta_offset_ms + burst_window_ms;
-
   function runCycle() {
+    // Read period dynamically so ops can change it at runtime
+    const period = state.get('cycle.period_ms') || config.cycle.period_ms;
+    const alphaOffset = config.cycle.sync_alpha_offset_ms;
+    const betaOffset = config.cycle.sync_beta_offset_ms;
+    const burstWindow = config.cycle.burst_window_ms;
+
+    // Scale sub-phase offsets proportionally when period changes
+    const scale = period / config.cycle.period_ms;
+    const prepMs = (alphaOffset + 15) * scale;
+    const betaMs = betaOffset * scale;
+    const idleMs = (betaOffset + burstWindow) * scale;
+
     const cycleNumber = state.get('cycle.number') + 1;
     const cycleStart = Date.now();
     state.set('cycle.number', cycleNumber);
@@ -33,32 +39,32 @@ function startCycleTicker() {
     state.emit('cycle.sync_alpha', { number: cycleNumber, ts: cycleStart });
 
     // Phase 2: PREP
-    cycleTimer = setTimeout(() => {
+    setTimeout(() => {
       state.set('cycle.phase', 'prep');
       state.emit('cycle.prep', { number: cycleNumber, ts: Date.now() });
-    }, prepOffset);
+    }, prepMs);
 
     // Phase 3: SYNC-beta + BURST
     setTimeout(() => {
       state.set('cycle.phase', 'sync_beta_burst');
       state.set('cycle.last_beta_ts', Date.now());
       state.emit('cycle.sync_beta_burst', { number: cycleNumber, ts: Date.now() });
-    }, betaBurstOffset);
+    }, betaMs);
 
     // Phase 4: IDLE
     setTimeout(() => {
       state.set('cycle.phase', 'idle');
       state.emit('cycle.idle', { number: cycleNumber, ts: Date.now() });
-    }, idleOffset);
+    }, idleMs);
 
     // Schedule next cycle aligned to period
     const elapsed = Date.now() - cycleStart;
-    const nextDelay = Math.max(0, period_ms - elapsed);
+    const nextDelay = Math.max(0, period - elapsed);
     cycleTimer = setTimeout(runCycle, nextDelay);
   }
 
   runCycle();
-  log.info({ period_ms }, 'cycle ticker started');
+  log.info({ period_ms: config.cycle.period_ms }, 'cycle ticker started');
 }
 
 function stopCycleTicker() {
@@ -90,6 +96,7 @@ server.listen(port, host, () => {
   log.info('===========================================');
 
   startCycleTicker();
+  initHealthMonitor();
 });
 
 // --- Graceful shutdown ---

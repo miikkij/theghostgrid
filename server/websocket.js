@@ -91,6 +91,14 @@ function attachWebSocket(httpServer) {
       state.emit('ops.trigger_scenario', data);
     });
 
+    socket.on('ops.set_cycle_period', (data) => {
+      if (data && data.period_ms && typeof data.period_ms === 'number') {
+        const period = Math.max(250, Math.min(10000, data.period_ms));
+        state.set('cycle.period_ms', period);
+        log.info({ period_ms: period }, 'cycle period updated');
+      }
+    });
+
     socket.on('phone.acknowledge', (data) => {
       const client = clients.get(socket.id);
       if (client && client.callsign) {

@@ -82,6 +82,13 @@
       onStateUpdate(data);
     });
 
+    // Incremental node state changes (keeps minimap and status bar live)
+    sock.on('node_state_change', function (data) {
+      if (data.nodeId && state.nodes[data.nodeId]) {
+        Object.assign(state.nodes[data.nodeId], data);
+      }
+    });
+
     sock.on('event', function (event) {
       addEvent(event);
     });

@@ -20,7 +20,7 @@ function computeNeighbors(callsign, pos, allNodes) {
     if (id === callsign) continue;
     if (!n.position) continue;
     var d = distance(pos, n.position);
-    if (d < 0.35) neighbors.push(id);
+    if (d < 0.5) neighbors.push(id);
   }
   neighbors.sort();
   return neighbors.slice(0, 5);

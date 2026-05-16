@@ -50,14 +50,18 @@ function initRouter() {
   // Forward node state changes to relevant clients
   state.on('state.changed', ({ path, value }) => {
     if (path.startsWith('nodes.')) {
-      state.broadcastTo('screen', 'node_state_change', { path, value });
-      state.broadcastTo('ops', 'node_state_change', { path, value });
-
-      // If this is a state field on a node, push to that phone
       const parts = path.split('.');
-      if (parts.length >= 3 && parts[2] === 'state') {
-        const callsign = parts[1];
-        state.broadcastTo('phone', 'node_state_change', { callsign, state: value });
+      const nodeId = parts[1];
+      const field = parts.slice(2).join('.');
+
+      // Send as { nodeId, [field]: value } so clients can update their state maps
+      const payload = { nodeId };
+      payload[field] = value;
+      state.broadcastTo('screen', 'node_state_change', payload);
+      state.broadcastTo('ops', 'node_state_change', payload);
+
+      if (field === 'state') {
+        state.broadcastTo('phone', 'node_state_change', { callsign: nodeId, state: value });
       }
     }
   });
@@ -66,6 +70,7 @@ function initRouter() {
   state.on('ops.trigger_scenario', (data) => {
     log.info({ scenario: data.scenario }, 'routing scenario trigger');
     state.broadcast('scenario_triggered', data);
+    broadcastEvent('scenario', 'Scenario: ' + (data.scenario || 'unknown'));
   });
 
   // Forward alert events to phones and screen/ops
@@ -74,13 +79,23 @@ function initRouter() {
     state.broadcastTo('screen', 'alert', data);
     state.broadcastTo('ops', 'alert', data);
     log.warn(data, 'alert broadcast');
+    broadcastEvent('alert', data.message || 'Alert triggered');
   });
 
-  // Forward AI decisions to screen and ops
+  // Forward AI decisions to screen and ops (both event name variants)
   state.on('hq.broadcast_proposed', (data) => {
     state.broadcastTo('screen', 'ai_decision', data);
     state.broadcastTo('ops', 'ai_decision', data);
+    // Also emit with dot notation for clients that use it
+    state.broadcastTo('ops', 'ai.decision', data);
     log.info({ urgency: data.urgency }, 'AI decision routed');
+  });
+
+  // Forward AI decisions emitted by hq_brain/index.js
+  state.on('ai.decision', (data) => {
+    state.broadcastTo('screen', 'ai_decision', data);
+    state.broadcastTo('ops', 'ai_decision', data);
+    state.broadcastTo('ops', 'ai.decision', data);
   });
 
   // Forward transmission arcs to screen
@@ -88,13 +103,49 @@ function initRouter() {
     state.broadcastTo('screen', 'transmission_arc', data);
   });
 
-  // Forward deception pattern changes
+  // Forward deception pattern changes (both event name variants)
   state.on('deception.pattern_activated', (data) => {
     state.broadcast('pattern_update', data);
+    state.broadcast('deception.pattern_activated', data);
+    broadcastEvent('deception', 'Pattern activated: ' + (data.patternName || data.name || 'unknown'));
   });
 
   state.on('deception.pattern_deactivated', (data) => {
     state.broadcast('pattern_update', data);
+    state.broadcast('deception.pattern_deactivated', data);
+    broadcastEvent('deception', 'Pattern deactivated: ' + (data.patternName || data.name || 'unknown'));
+  });
+
+  // Forward honeypot triggers as events
+  state.on('deception.honeypot_triggered', (data) => {
+    broadcastEvent('honeypot', 'Honeypot ' + (data.honeypotId || '') + ' triggered: ' + (data.type || 'unknown'));
+  });
+
+  // Forward mesh events as ops log entries
+  state.on('mesh.routing_converged', (data) => {
+    broadcastEvent('routing', 'Mesh routing converged (cycle ' + (data.cycle || '?') + ')');
+  });
+
+  // Generic event broadcaster for the ops event log
+  function broadcastEvent(type, message) {
+    state.broadcastTo('ops', 'event', {
+      type: type,
+      ts: Date.now(),
+      message: message,
+    });
+  }
+
+  // Broadcast notable node events (joins, deaths)
+  state.on('state.changed', ({ path, value }) => {
+    if (!path.startsWith('nodes.')) return;
+    const parts = path.split('.');
+    if (parts[2] !== 'state') return;
+    const nodeId = parts[1];
+    if (value === 'DEAD') {
+      broadcastEvent('node_leave', nodeId + ' disconnected');
+    } else if (value === 'JAMMED') {
+      broadcastEvent('jamming', nodeId + ' — JAMMED');
+    }
   });
 
   log.info('event router initialized');
