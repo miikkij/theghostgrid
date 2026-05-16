@@ -567,13 +567,20 @@
     for (var ni = 0; ni < nodeIds.length; ni++) {
       var nodeId = nodeIds[ni];
       var node = state.nodes[nodeId];
-      if (!node.position) continue;
-
-      // For soldiers: use last reported position from units table if available
-      var pos = node.position;
       var unit = state.units ? state.units[nodeId] : null;
-      if (node.type === 'soldier' && unit && unit.position) {
-        pos = unit.position;
+
+      // For soldiers: use unit's last reported position (fog of war)
+      // For decoys/honeypots: use node.position (server knows these)
+      var pos;
+      if (node.type === 'soldier') {
+        if (unit && unit.position) {
+          pos = unit.position;
+        } else {
+          continue; // soldier hasn't reported yet — HQ doesn't know where they are
+        }
+      } else {
+        pos = node.position;
+        if (!pos) continue;
       }
 
       var nx = pos.x * w;
