@@ -21,6 +21,7 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
     ],
     max_tokens: maxTokens || 2000,
     temperature: temperature ?? 0.3,
+    chat_template_kwargs: { enable_thinking: false },
   };
 
   if (responseFormat) {
