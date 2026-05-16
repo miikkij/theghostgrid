@@ -19,7 +19,7 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    max_tokens: maxTokens || 500,
+    max_tokens: maxTokens || 2000,
     temperature: temperature ?? 0.3,
   };
 
@@ -48,13 +48,30 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
     }
 
     const data = await res.json();
-    const content = data.choices?.[0]?.message?.content;
+    const msg = data.choices?.[0]?.message;
+    const content = msg?.content;
 
-    if (!content) {
-      throw new Error('ConfidentialMind returned empty response');
+    // Qwen3 "thinking" mode: content may be null while reasoning is populated
+    if (content) {
+      return JSON.parse(content);
     }
 
-    return JSON.parse(content);
+    // Fallback: extract from reasoning field if content is empty
+    if (msg?.reasoning) {
+      const jsonMatch = msg.reasoning.match(/\{[\s\S]*"urgency"[\s\S]*\}/);
+      if (jsonMatch) return JSON.parse(jsonMatch[0]);
+
+      // If no JSON in reasoning, construct response from the reasoning text
+      return {
+        urgency: 'MEDIUM',
+        classification: 'ai_analysis',
+        confidence: 0.7,
+        reasoning: msg.reasoning.slice(-500),
+        broadcast_content: null,
+      };
+    }
+
+    throw new Error('ConfidentialMind returned empty response');
   } finally {
     clearTimeout(timeout);
   }
