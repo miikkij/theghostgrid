@@ -95,10 +95,12 @@ function updateOverlays() {
 
   var nodeValues = Object.values(state.nodes);
   if (overlayRefs.packets) {
-    overlayRefs.packets.textContent = formatNumber(state.stats.packets_total);
+    var pkt = state.stats.packets_total || state.stats._local_packets || 0;
+    overlayRefs.packets.textContent = formatNumber(pkt);
   }
   if (overlayRefs.drift) {
-    overlayRefs.drift.textContent = state.stats.sync_drift_ms + 'ms';
+    var drift = state.stats.sync_drift_ms || state.cycle.drift_ms || 0;
+    overlayRefs.drift.textContent = drift + 'ms';
   }
   if (overlayRefs.nodes) {
     overlayRefs.nodes.textContent = nodeValues.filter(function(n) { return n.type === 'soldier' || n.type === 'real'; }).length;
@@ -121,14 +123,11 @@ function updateOverlays() {
     }
   }
   if (overlayRefs.aiStatus) {
-    if (state.ai_reasoning && state.ai_reasoning.classification === 'llm_unavailable') {
-      overlayRefs.aiStatus.textContent = 'Off';
-      overlayRefs.aiStatus.style.color = 'var(--text-muted)';
-    } else if (state.ai_reasoning) {
-      overlayRefs.aiStatus.textContent = 'Ollama';
+    if (state.stats.ai_decisions > 0) {
+      overlayRefs.aiStatus.textContent = 'ACTIVE';
       overlayRefs.aiStatus.style.color = 'var(--accent-green)';
     } else {
-      overlayRefs.aiStatus.textContent = 'Off';
+      overlayRefs.aiStatus.textContent = 'STANDBY';
       overlayRefs.aiStatus.style.color = 'var(--text-muted)';
     }
   }
@@ -533,6 +532,8 @@ if (isMock) {
     });
 
     socket.on('transmission_arc', function(data) {
+      if (!state.stats._local_packets) state.stats._local_packets = 0;
+      state.stats._local_packets++;
       state.active_transmissions.push({
         from: data.from,
         to: data.to,
@@ -563,12 +564,14 @@ if (isMock) {
     socket.on('ai.decision', function(decision) {
       state.ai_reasoning = decision;
       state.stats.ai_decisions++;
+
       showAIReasoning(decision);
     });
 
     socket.on('ai_decision', function(decision) {
       state.ai_reasoning = decision;
       state.stats.ai_decisions++;
+
       showAIReasoning(decision);
     });
 
