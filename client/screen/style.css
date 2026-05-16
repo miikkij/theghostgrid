@@ -62,7 +62,7 @@ body.cursor-visible {
 }
 
 .overlay-panel.bottom-right {
-  bottom: 70px;
+  bottom: 24px;
   right: 24px;
   font-size: 0.625rem;
   color: var(--text-muted);
