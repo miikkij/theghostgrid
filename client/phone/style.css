@@ -161,32 +161,191 @@ body {
   letter-spacing: 0.04em;
 }
 
-/* State indicator — central visual anchor */
-.state-display {
-  flex: 1;
+.header-right {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 0;
+  gap: var(--space-2);
 }
 
-.state-indicator {
-  width: 180px;
-  height: 180px;
+.state-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  letter-spacing: 0.06em;
+}
+
+.state-badge[data-state="tx"] { border-color: var(--accent-amber); color: var(--accent-amber); }
+.state-badge[data-state="rx"] { border-color: var(--accent-green); color: var(--accent-green); }
+.state-badge[data-state="jammed"] { border-color: var(--accent-red); color: var(--accent-red); }
+.state-badge[data-state="sync"] { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+/* State row — compact indicator + countdown */
+.state-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.state-indicator-small {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  margin-bottom: var(--space-3);
   flex-shrink: 0;
 }
 
-@media (max-height: 600px) {
-  .state-indicator {
-    width: 140px;
-    height: 140px;
-  }
+/* Reuse existing state-indicator styles for the small version */
+.state-indicator-small .state-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--accent-cyan); transition: border-color 300ms, box-shadow 300ms; }
+.state-indicator-small[data-state="listening"] .state-ring { animation: subtle-pulse 2.5s ease-in-out infinite; }
+.state-indicator-small[data-state="sync"] .state-ring { box-shadow: 0 0 15px rgba(34, 211, 238, 0.5); }
+.state-indicator-small[data-state="tx"] .state-ring { border-color: var(--accent-amber); box-shadow: 0 0 12px rgba(251, 191, 36, 0.3); }
+.state-indicator-small[data-state="rx"] .state-ring { border-color: var(--accent-green); }
+.state-indicator-small[data-state="jammed"] .state-ring { border-color: var(--accent-red); animation: shake 0.4s ease-in-out infinite; }
+
+.state-indicator-small .state-label { font-size: 0.75rem; z-index: 1; color: var(--text-bright); }
+
+.sync-status {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--accent-green);
+  margin-left: auto;
+}
+
+/* Tactical map */
+.tac-map {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  background: var(--bg-panel);
+}
+
+#tac-map-canvas {
+  width: 100%;
+  height: 140px;
+  display: block;
+  touch-action: none;
+}
+
+.map-hint {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Outbound queue */
+.outbound-queue, .hq-requests {
+  background: var(--bg-panel);
+  border-radius: 8px;
+  padding: var(--space-1) var(--space-2);
+  flex-shrink: 0;
+}
+
+.outbound-queue h3, .hq-requests h3 {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  margin: 0 0 var(--space-1);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.queue-count {
+  background: var(--accent-amber);
+  color: var(--bg-deep);
+  font-size: 0.5625rem;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: center;
+}
+
+.queue-list, .hq-request-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.queue-list li, .hq-request-list li {
+  padding: 2px 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.queue-item-type {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 1px 3px;
+  border-radius: 2px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--accent-amber);
+}
+
+.queue-item-waiting {
+  color: var(--text-muted);
+  font-size: 0.625rem;
+  margin-left: auto;
+}
+
+.hq-request-item {
+  color: var(--accent-cyan);
+  font-weight: 500;
+}
+
+/* Bottom panels — neighbors + recent side by side */
+.bottom-panels {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.neighbors-compact, .recent-compact {
+  flex: 1;
+  background: var(--bg-panel);
+  border-radius: 8px;
+  padding: var(--space-1) var(--space-2);
+  min-width: 0;
+}
+
+.neighbors-compact h3, .recent-compact h3 {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  margin: 0 0 2px;
+  text-transform: uppercase;
+}
+
+/* Keep existing state-indicator styles for backward compat */
+.state-indicator {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .state-ring {

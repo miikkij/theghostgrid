@@ -185,6 +185,12 @@ function initPhoneSim() {
   state.on('ops.trigger_scenario', (data) => {
     if (data.scenario === 'request_sitrep') {
       var phones = getPhoneNodes();
+      // Notify phones about HQ request
+      state.broadcastTo('phone', 'phone.hq_request', {
+        type: 'SITREP',
+        ts: Date.now(),
+        message: 'HQ requests status report from all units',
+      });
       for (var [callsign] of phones) {
         txThisCycle.add(callsign);
         state.set(`nodes.${callsign}.state`, 'TX');

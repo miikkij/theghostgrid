@@ -99,6 +99,17 @@ function attachWebSocket(httpServer) {
       }
     });
 
+    socket.on('phone.move', (data) => {
+      const client = clients.get(socket.id);
+      if (client && client.callsign && data.position) {
+        state.set(`nodes.${client.callsign}.position`, data.position);
+      }
+    });
+
+    socket.on('phone.message', (data) => {
+      log.debug({ callsign: data.callsign, type: data.type, dest: data.dest }, 'phone message');
+    });
+
     socket.on('phone.acknowledge', (data) => {
       const client = clients.get(socket.id);
       if (client && client.callsign) {

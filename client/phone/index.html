@@ -64,32 +64,61 @@
   <div id="active-node" class="screen hidden" role="main" aria-label="Node status display">
     <header class="node-header">
       <div class="callsign" id="callsign" aria-label="Callsign">---</div>
-      <div class="role-badge" id="role-badge" aria-label="Role">---</div>
+      <div class="header-right">
+        <div class="role-badge" id="role-badge" aria-label="Role">---</div>
+        <div class="state-badge" id="state-badge" data-state="listening">LISTENING</div>
+      </div>
     </header>
 
-    <section class="state-display">
-      <div class="state-indicator" id="state-indicator" data-state="listening">
+    <!-- Compact state + countdown row -->
+    <section class="state-row">
+      <div class="state-indicator-small" id="state-indicator" data-state="listening">
         <div class="state-ring"></div>
-        <div class="state-label" id="state-label">LISTENING</div>
+        <div class="state-label" id="state-label">●</div>
       </div>
       <div class="countdown">
         <span class="countdown-label">Next burst</span>
         <span class="countdown-value" id="countdown-value">&mdash;</span>
       </div>
+      <div class="sync-status" id="sync-status">SYNC OK</div>
     </section>
 
-    <section class="neighbors" aria-label="Neighbor nodes">
-      <h3>NEIGHBORS</h3>
-      <ul class="neighbors-list" id="neighbors-list">
-        <li class="empty-state">Discovering...</li>
+    <!-- Tactical map — tap to move -->
+    <section class="tac-map" aria-label="Tactical map">
+      <canvas id="tac-map-canvas"></canvas>
+      <div class="map-hint">Tap to set waypoint</div>
+    </section>
+
+    <!-- Outbound queue -->
+    <section class="outbound-queue" aria-label="Outbound message queue">
+      <h3>OUTBOUND <span class="queue-count" id="queue-count">0</span></h3>
+      <ul class="queue-list" id="queue-list">
+        <li class="empty-state">Queue empty — listening</li>
       </ul>
     </section>
 
-    <section class="recent-events" aria-label="Recent events">
-      <h3>RECENT</h3>
-      <ul class="events-list" id="events-list">
-        <li class="empty-state">Waiting for events...</li>
+    <!-- HQ Requests -->
+    <section class="hq-requests" aria-label="HQ requests">
+      <h3>HQ REQUESTS</h3>
+      <ul class="hq-request-list" id="hq-request-list">
+        <li class="empty-state">No pending requests</li>
       </ul>
+    </section>
+
+    <!-- Neighbors + Recent compact -->
+    <section class="bottom-panels">
+      <div class="neighbors-compact" aria-label="Neighbor nodes">
+        <h3>NEIGHBORS</h3>
+        <ul class="neighbors-list" id="neighbors-list">
+          <li class="empty-state">Discovering...</li>
+        </ul>
+      </div>
+      <div class="recent-compact" aria-label="Recent events">
+        <h3>RECENT</h3>
+        <ul class="events-list" id="events-list">
+          <li class="empty-state">Waiting...</li>
+        </ul>
+      </div>
     </section>
 
     <footer class="connection-footer">
