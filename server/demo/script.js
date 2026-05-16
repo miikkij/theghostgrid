@@ -52,7 +52,7 @@ function buildSteps() {
 
     // Minute 4: Honeypot + AI (narrative climax)
     { t: 175, fn: () => { dispatch('trigger_honeypot', { eventType: 'artillery' }); broadcastStep('HONEYPOT. Acoustic sensor detects artillery overpressure.'); }},
-    { t: 182, fn: () => { broadcastStep('Alert reaches every phone in 5 seconds. Sensor to warning, through the mesh, without HQ intervention.'); }},
+    { t: 182, fn: () => { broadcastStep('Alert reaches every unit in 5 seconds. Sensor to warning, through the mesh, without HQ intervention.'); }},
     { t: 190, fn: () => { broadcastStep('Friendly forces in the impact area have 25-85 seconds to take cover. Time of flight at typical artillery range.'); }},
     { t: 200, fn: () => { dispatch('trigger_ai_adaptation', {}); broadcastStep('AI on ConfidentialMind analyzes enemy reaction. Updates choreography.'); }},
 
