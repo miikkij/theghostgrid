@@ -69,6 +69,7 @@
 
   function bindSocketEvents(sock) {
     sock.on('cycle_tick', function (data) {
+      if (data.stats) Object.assign(state.stats, data.stats);
       Object.assign(state.cycle, data);
       if (data.phase === 'paused') {
         state.paused = true;
