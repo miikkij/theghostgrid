@@ -623,7 +623,16 @@ if (isMock) {
       socket.on('cycle_tick', function(data) {
         if (data.phase === 'sync_alpha') pulse.push('cycle', 0.1);
       });
-      socket.on('demo_step', function() { pulse.push('demo', 0.6); });
+      socket.on('demo_step', function(data) {
+        pulse.push('demo', 0.6);
+        var banner = document.getElementById('pitch-banner');
+        if (banner && data && data.message) {
+          banner.textContent = data.message;
+          banner.classList.remove('hidden');
+          clearTimeout(banner._timer);
+          banner._timer = setTimeout(function() { banner.classList.add('hidden'); }, 8000);
+        }
+      });
       socket.on('scenario_triggered', function() { pulse.push('scenario', 0.5); });
     }
   }

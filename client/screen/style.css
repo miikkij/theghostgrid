@@ -68,7 +68,7 @@ body.cursor-visible {
   color: var(--text-muted);
   padding: 8px 12px;
   line-height: 1.6;
-  max-width: 200px;
+  max-width: 150px;
 }
 
 .legend-line {
@@ -355,6 +355,33 @@ body.cursor-visible {
 
 /* Hide connection indicator when sim badge is showing (same position) */
 .sim-active #connection-indicator {
+  opacity: 0;
+}
+
+/* --- Pitch step banner --- */
+
+.pitch-banner {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-bright);
+  background: rgba(10, 14, 26, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 6px;
+  padding: 8px 20px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease-default);
+}
+
+.pitch-banner.hidden {
   opacity: 0;
 }
 
