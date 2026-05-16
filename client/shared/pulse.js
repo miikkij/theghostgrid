@@ -43,16 +43,26 @@ function SystemPulse(canvas, opts) {
 
   this._resize();
   this._startLoop();
+
+  var self = this;
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { self._resize(); }, 100);
+  });
 }
 
 SystemPulse.prototype._resize = function () {
   var rect = this.canvas.getBoundingClientRect();
   var dpr = window.devicePixelRatio || 1;
-  this.canvas.width = rect.width * dpr;
-  this.canvas.height = this.height * dpr;
-  this.canvas.style.height = this.height + 'px';
-  this.width = rect.width;
+  var w = Math.round(rect.width);
+  var h = Math.round(rect.height) || this.height;
+  this.canvas.width = w * dpr;
+  this.canvas.height = h * dpr;
+  this.width = w;
+  this.height = h;
   this.dpr = dpr;
+  this.baselineY = h * 0.65;
 };
 
 SystemPulse.prototype.push = function (type, intensity) {
