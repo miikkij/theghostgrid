@@ -75,7 +75,6 @@ async function processEvent(event) {
       systemPrompt: TACTICAL_LOOP_PROMPT,
       userMessage,
       responseFormat: { type: 'json_object' },
-      maxTokens: 500,
       temperature: 0.3,
     });
   } catch (err) {

@@ -33,7 +33,6 @@ async function runOperationalCycle() {
       systemPrompt: OPERATIONAL_LOOP_PROMPT,
       userMessage,
       responseFormat: { type: 'json_object' },
-      maxTokens: 800,
       temperature: 0.4,
     });
   } catch (err) {

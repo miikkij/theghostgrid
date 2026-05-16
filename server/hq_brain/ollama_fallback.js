@@ -16,7 +16,7 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
     ],
     stream: false,
     options: {
-      num_predict: maxTokens || 500,
+      num_predict: maxTokens || parseInt(process.env.CM_MAX_TOKENS) || 4000,
       temperature: temperature ?? 0.3,
     },
   };
