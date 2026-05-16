@@ -14,7 +14,7 @@ Date: 2026-05-16
 | HQ Brain (05) | 25 | 16 | 2 | 6 |
 | Build Components (06) | ~45 | ~18 | 0 | ~12 |
 | Stack/Demo/UI (07+08+10) | ~55 | ~25 | 0 | ~20 |
-| **Estimated Total** | **~176** | **~95** | **~8** | **~60** |
+| **Estimated Total** | **~176** | **~95** | **~7** | **~60** |
 
 ---
 
@@ -69,11 +69,9 @@ The "Run Full Pitch (5 min)" button sends an event nothing handles. The 5-minute
 
 **Fix:** Accept as documented deviation (DECISIONS.md already notes this). Node.js doesn't expose standalone Poly1305.
 
-### W-4: Ollama timeout 120s violates 5-second tactical budget
+### ~~W-4: Ollama timeout 120s~~ — ACCEPTED
 
-`server/hq_brain/ollama_fallback.js:28` defaults to 120s. If Ollama is the active backend, the tactical loop can block for 2 minutes per event.
-
-**Fix:** Add a 4-second timeout wrapper in `tactical_loop.js:processEvent()` or reduce Ollama timeout to 4s for tactical calls.
+Ollama is a local fallback for machines without ConfidentialMind. Local inference on CPU is inherently slow. The 120s timeout is intentional and correct — constraining it to 5s would make the fallback unusable. The 5-second tactical budget applies to ConfidentialMind (which has a 3s timeout). When using Ollama, operators accept higher latency as a tradeoff for air-gapped operation.
 
 ### W-5: Audit logs not immutable
 
@@ -235,26 +233,25 @@ Red banner appears but control buttons are not explicitly disabled during discon
 
 ## RECOMMENDED FIX ORDER
 
-### Phase 1: Make the demo work (< 1 day)
+### Phase 1: Make the demo work — all P0 items (< 1 day)
 
-1. **Create scenario dispatcher** (`server/demo/scenarios.js`) — bridges ops triggers to subsystems
-2. **Init HQ Brain** in `server/index.js`
-3. **Fix burst window** to 50ms in config
-4. **Fix Ollama timeout** to 4s for tactical calls
-5. **Add pause/resume cycle** handlers
+1. **M-1: Create scenario dispatcher** (`server/demo/scenarios.js`) — bridges ops triggers to subsystems
+2. **M-3: Init HQ Brain** in `server/index.js` — AI pipeline currently dead code
+3. **M-5: Add pause/resume cycle handlers** — pause button currently dead
+4. **W-1: Fix burst window** to 50ms in config
+5. **W-6: Fix confidence-based urgency downgrade** enforcement
 
-### Phase 2: Polish for pitch (< 1 day)
+### Phase 2: Demo orchestrator + polish (< 1 day)
 
-6. **Create demo orchestrator** (`server/demo/script.js`) — 5-minute scripted sequence
-7. **Fix confidence-based urgency downgrade** enforcement
-8. **Move master secret to env config** (out of source code)
-9. **Fix DV announce interval** to 3 (match reconvergence spec)
-10. **Add scenario button icons** to ops dashboard
+6. **M-2: Create demo orchestrator** (`server/demo/script.js`) — 5-minute scripted sequence
+7. **Move master secret to env config** (out of source code)
+8. **Fix DV announce interval** to 3 (match reconvergence spec)
+9. **Add scenario button icons** to ops dashboard
 
 ### Phase 3: Hardening (if time allows)
 
-11. Add radio bridge spawn from Node.js
-12. Add hash-chain audit immutability
-13. Fix flood routing to broadcast to all neighbors
-14. Improve statistical equivalence (routing class distribution, destination variety)
-15. Add ROE state machine (programmatic, not prompt-only)
+10. **M-4: Radio bridge spawn from Node.js** (depends on radio bridge completion)
+11. Add hash-chain audit immutability
+12. Fix flood routing to broadcast to all neighbors
+13. Improve statistical equivalence (routing class distribution, destination variety)
+14. Add ROE state machine (programmatic, not prompt-only)
