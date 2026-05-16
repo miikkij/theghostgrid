@@ -25,42 +25,42 @@ function init(state) {
 
 function buildSteps() {
   return [
-    // Minute 0: Sync beacon — the architectural anchor (3s pause after countdown)
+    // Minute 0: Sync beacon (3s pause after countdown)
     { t: 0,   fn: () => { dispatch('resume_cycles', {}); }},
-    { t: 3,   fn: () => { broadcastStep('Sync beacon active — fiber-tethered drones provide time discipline'); }},
+    { t: 3,   fn: () => { broadcastStep('Sync beacon active. Fiber-tethered drones provide time discipline.'); }},
     { t: 11,  fn: () => { broadcastStep('GPS jammed? Doesn\'t matter. The drone on fiber holds time discipline no jammer can reach.'); }},
-    { t: 18,  fn: () => { broadcastStep('Position data flows to HQ inside the sync window — every node, every cycle, anchored to the drone.'); }},
-    { t: 25,  fn: () => { dispatch('request_sitrep', {}); broadcastStep('Initial SITREP — all units report position to HQ via drone mesh relay'); }},
+    { t: 18,  fn: () => { broadcastStep('Position data flows to HQ inside the sync window. Every node, every cycle, anchored to the drone.'); }},
+    { t: 25,  fn: () => { dispatch('request_sitrep', {}); broadcastStep('Initial SITREP. All units report position to HQ via drone mesh relay.'); }},
 
     // Minute 1: Troops moving + burst protocol
-    { t: 35,  fn: () => { popSettings({ movementEnabled: true, movementSpeed: 0.003 }); broadcastStep('Squads deploying — watch them move across the operational area'); }},
-    { t: 45,  fn: () => { broadcastStep('Sub-50ms burst windows — soldiers emit only when they have data, then go silent'); }},
-    { t: 55,  fn: () => { dispatch('request_sitrep', {}); broadcastStep('HQ requests SITREP — positions updated hop-by-hop through the mesh'); }},
+    { t: 35,  fn: () => { popSettings({ movementEnabled: true, movementSpeed: 0.003 }); broadcastStep('Squads deploying. Watch them move across the operational area.'); }},
+    { t: 45,  fn: () => { broadcastStep('Sub-50ms burst windows. Soldiers emit only when they have data, then go silent.'); }},
+    { t: 55,  fn: () => { dispatch('request_sitrep', {}); broadcastStep('HQ requests SITREP. Positions updated hop-by-hop through the mesh.'); }},
 
     // Minute 2: Resilience under attack
-    { t: 70,  fn: () => { dispatch('inject_jamming', { area: { center: { x: 0.55, y: 0.45 }, radius: 0.15 } }); broadcastStep('EW ATTACK — enemy jams sector 3'); }},
-    { t: 80,  fn: () => { broadcastStep('Mesh routing reconverges around the dead zone — no GPS in this chain'); }},
-    { t: 85,  fn: () => { dispatch('clear_jamming', {}); broadcastStep('Jamming cleared — mesh self-healed'); }},
-    { t: 100, fn: () => { dispatch('drop_drone', { droneId: 'DRONE-2' }); broadcastStep('DRONE-2 lost — remaining drones continue providing sync'); }},
-    { t: 110, fn: () => { dispatch('request_sitrep', {}); broadcastStep('SITREP after attack — HQ confirms all units still reporting'); }},
+    { t: 70,  fn: () => { dispatch('inject_jamming', { area: { center: { x: 0.55, y: 0.45 }, radius: 0.15 } }); broadcastStep('EW ATTACK. Enemy jams sector 3.'); }},
+    { t: 80,  fn: () => { broadcastStep('Mesh routing reconverges around the dead zone. No GPS in this chain.'); }},
+    { t: 85,  fn: () => { dispatch('clear_jamming', {}); broadcastStep('Jamming cleared. Mesh self-healed.'); }},
+    { t: 100, fn: () => { dispatch('drop_drone', { droneId: 'DRONE-2' }); broadcastStep('DRONE-2 lost. Remaining drones continue providing sync.'); }},
+    { t: 110, fn: () => { dispatch('request_sitrep', {}); broadcastStep('SITREP after attack. HQ confirms all units still reporting.'); }},
 
     // Minute 3: Deception capability
-    { t: 120, fn: () => { dispatch('activate_decoys', { count: 47 }); broadcastStep('47 decoy emitters deployed — EUR 25 each, protocol-identical to real soldiers'); }},
-    { t: 130, fn: () => { popSettings({ txEnabled: true, txRate: 0.1 }); broadcastStep('Decoys and soldiers transmitting — enemy SIGINT sees uniform traffic, can\'t distinguish'); }},
-    { t: 140, fn: () => { dispatch('activate_pattern', { patternName: 'linear_translation', parameters: { velocity: 0.02, direction: 0, bandWidth: 0.15 } }); broadcastStep('Wave choreography — enemy sees a battalion moving east'); }},
-    { t: 155, fn: () => { dispatch('activate_pattern', { patternName: 'phantom_convoy', parameters: { velocity: 0.025, convoyLength: 0.3, path: [{ x: 0.2, y: 0.7 }, { x: 0.5, y: 0.5 }, { x: 0.8, y: 0.3 }] } }); broadcastStep('Phantom convoy — second deception axis, same protocol'); }},
+    { t: 120, fn: () => { dispatch('activate_decoys', { count: 47 }); broadcastStep('47 decoy emitters deployed. EUR 25 each, protocol-identical to real soldiers.'); }},
+    { t: 130, fn: () => { popSettings({ txEnabled: true, txRate: 0.1 }); broadcastStep('Decoys and soldiers transmitting. Enemy SIGINT sees uniform traffic, can\'t distinguish.'); }},
+    { t: 140, fn: () => { dispatch('activate_pattern', { patternName: 'linear_translation', parameters: { velocity: 0.02, direction: 0, bandWidth: 0.15 } }); broadcastStep('Wave choreography. Enemy sees a battalion moving east.'); }},
+    { t: 155, fn: () => { dispatch('activate_pattern', { patternName: 'phantom_convoy', parameters: { velocity: 0.025, convoyLength: 0.3, path: [{ x: 0.2, y: 0.7 }, { x: 0.5, y: 0.5 }, { x: 0.8, y: 0.3 }] } }); broadcastStep('Phantom convoy. Second deception axis, same protocol.'); }},
 
     // Minute 4: Honeypot + AI (narrative climax)
-    { t: 175, fn: () => { dispatch('trigger_honeypot', { eventType: 'artillery' }); broadcastStep('HONEYPOT — acoustic sensor detects artillery overpressure'); }},
+    { t: 175, fn: () => { dispatch('trigger_honeypot', { eventType: 'artillery' }); broadcastStep('HONEYPOT. Acoustic sensor detects artillery overpressure.'); }},
     { t: 182, fn: () => { broadcastStep('Alert reaches every phone in 5 seconds. Sensor to warning, through the mesh, without HQ intervention.'); }},
     { t: 190, fn: () => { broadcastStep('Friendly forces in the impact area have 25-85 seconds to take cover. Time of flight at typical artillery range.'); }},
-    { t: 200, fn: () => { dispatch('trigger_ai_adaptation', {}); broadcastStep('AI on ConfidentialMind analyzes enemy reaction — updates choreography'); }},
+    { t: 200, fn: () => { dispatch('trigger_ai_adaptation', {}); broadcastStep('AI on ConfidentialMind analyzes enemy reaction. Updates choreography.'); }},
 
     // Minute 5: Recovery + final proof
-    { t: 215, fn: () => { _state.set('drones.DRONE-2', { position: { x: 0.65, y: 0.12 }, status: 'active', role: 'sync' }); broadcastStep('DRONE-2 restored — full sync redundancy'); }},
-    { t: 225, fn: () => { broadcastStep('Watch the gap between real positions and HQ-known rings — that\'s fog of war, updated only by soldier reports'); }},
-    { t: 240, fn: () => { dispatch('request_sitrep', {}); broadcastStep('Final SITREP — rings snap to soldiers, HQ picture complete'); }},
-    { t: 255, fn: () => { popSettings({ movementEnabled: false, txEnabled: false }); broadcastStep('Architecture proven — sync beacon anchors everything'); }},
+    { t: 215, fn: () => { _state.set('drones.DRONE-2', { position: { x: 0.65, y: 0.12 }, status: 'active', role: 'sync' }); broadcastStep('DRONE-2 restored. Full sync redundancy.'); }},
+    { t: 225, fn: () => { broadcastStep('Watch the gap between real positions and HQ-known rings. That\'s fog of war, updated only by soldier reports.'); }},
+    { t: 240, fn: () => { dispatch('request_sitrep', {}); broadcastStep('Final SITREP. Rings snap to soldiers, HQ picture complete.'); }},
+    { t: 255, fn: () => { popSettings({ movementEnabled: false, txEnabled: false }); broadcastStep('Architecture proven. Sync beacon anchors everything.'); }},
 
     // Closing sequence: wordmark → tagline → cadence
     { t: 270, fn: () => { dispatch('reset_state', {}); dispatch('resume_cycles', {}); broadcastScreen('wordmark', 'THE GHOST GRID'); }},
@@ -98,7 +98,7 @@ function pause() {
   _paused = true;
   _pausedAt = Date.now();
   clearAllTimers();
-  broadcastStep('Pitch PAUSED — press resume to continue');
+  broadcastStep('Pitch PAUSED. Press resume to continue.');
   log.info('pitch paused');
 }
 
