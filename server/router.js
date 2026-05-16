@@ -118,6 +118,7 @@ function initRouter() {
   // Forward transmission arcs to screen
   state.on('transmission.frame_transmitted', (data) => {
     state.broadcastTo('screen', 'transmission_arc', data);
+    state.broadcastTo('ops', 'transmission_arc', data);
   });
 
   // Forward deception pattern changes (both event name variants)
