@@ -42,10 +42,13 @@
       <div id="reasoning-content"></div>
     </div>
 
-    <!-- Simulation control -->
+    <!-- Bottom controls — simulation + pitch -->
     <div id="sim-control" class="overlay-panel bottom-center">
       <button id="sim-toggle" class="sim-btn mono" title="Run test simulation">
         <span class="sim-play">&#9654;</span> SIMULATION
+      </button>
+      <button id="pitch-toggle" class="sim-btn mono" style="margin-left:8px;" title="Run 5-minute pitch">
+        &#9654;&#9654; RUN PITCH
       </button>
     </div>
 
@@ -54,7 +57,14 @@
       <span class="sim-pulse"></span> SIMULATION ACTIVE
     </div>
 
-    <!-- Pitch step banner — bottom-center, above pulse -->
+    <!-- Pitch countdown overlay -->
+    <div id="pitch-countdown" class="pitch-countdown hidden">
+      <div class="pitch-countdown-text">PITCH STARTING</div>
+      <div class="pitch-countdown-number" id="pitch-countdown-num">10</div>
+      <div class="pitch-countdown-sub">GET READY</div>
+    </div>
+
+    <!-- Pitch step banner — at bottom control level -->
     <div id="pitch-banner" class="pitch-banner hidden"></div>
 
     <!-- Legend + FPS — bottom-right -->

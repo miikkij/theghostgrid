@@ -358,11 +358,51 @@ body.cursor-visible {
   opacity: 0;
 }
 
+/* --- Pitch countdown --- */
+
+.pitch-countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  background: rgba(10, 14, 26, 0.85);
+  transition: opacity 0.5s;
+}
+
+.pitch-countdown.hidden { opacity: 0; pointer-events: none; }
+
+.pitch-countdown-text {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  letter-spacing: 0.2em;
+  color: var(--accent-cyan);
+  margin-bottom: 16px;
+}
+
+.pitch-countdown-number {
+  font-family: var(--font-mono);
+  font-size: 6rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+.pitch-countdown-sub {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+  color: var(--text-muted);
+  margin-top: 16px;
+}
+
 /* --- Pitch step banner --- */
 
 .pitch-banner {
   position: absolute;
-  bottom: 60px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -384,6 +424,9 @@ body.cursor-visible {
 .pitch-banner.hidden {
   opacity: 0;
 }
+
+/* Hide sim/pitch buttons during active pitch */
+.pitch-active #sim-control { opacity: 0; pointer-events: none; }
 
 /* --- Disconnected overlay --- */
 

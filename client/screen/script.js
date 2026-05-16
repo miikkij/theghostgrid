@@ -664,5 +664,44 @@ if (isMock) {
       });
       socket.on('scenario_triggered', function() { pulse.push('scenario', 0.5); });
     }
+
+    // --- Pitch button on big screen ---
+    var pitchBtn = document.getElementById('pitch-toggle');
+    if (pitchBtn) {
+      pitchBtn.addEventListener('click', function () {
+        startPitchCountdown(socket);
+      });
+    }
+
+    // Listen for pitch completion to restore UI
+    socket.on('demo_step', function (data) {
+      if (data && data.message && data.message.indexOf('anchored in a sync beacon') >= 0) {
+        document.body.classList.remove('pitch-active');
+      }
+    });
   }
+}
+
+function startPitchCountdown(sock) {
+  var overlay = document.getElementById('pitch-countdown');
+  var numEl = document.getElementById('pitch-countdown-num');
+  if (!overlay || !numEl) return;
+
+  overlay.classList.remove('hidden');
+  document.body.classList.add('pitch-active');
+
+  var count = 10;
+  numEl.textContent = count;
+
+  var timer = setInterval(function () {
+    count--;
+    numEl.textContent = count;
+    if (count <= 0) {
+      clearInterval(timer);
+      overlay.classList.add('hidden');
+      if (sock) {
+        sock.emit('ops.trigger_scenario', { scenario: 'run_full_pitch', parameters: {} });
+      }
+    }
+  }, 1000);
 }
