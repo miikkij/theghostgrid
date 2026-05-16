@@ -178,6 +178,11 @@ function onBurst() {
         var msgTypes = ['POS', 'STATUS', 'ACK', 'RELAY'];
         var msgType = msgTypes[Math.floor(Math.random() * msgTypes.length)];
         meshViz.injectMessage(callsign, msgType);
+
+        // POS and STATUS reports update HQ's knowledge (unit record + ops position)
+        if (msgType === 'POS' || msgType === 'STATUS') {
+          state.emit('phone.unit_report', { callsign, nodeData: node, msgType });
+        }
       }
     }
   }
