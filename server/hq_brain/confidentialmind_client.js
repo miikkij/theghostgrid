@@ -3,6 +3,9 @@
 const config = require('../config');
 const log = require('../log').child({ component: 'hq_brain.confidentialmind' });
 
+const USE_REASONING = process.env.CM_USE_REASONING === 'true';
+const MAX_TOKENS = parseInt(process.env.CM_MAX_TOKENS) || 4000;
+
 async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temperature }) {
   const { endpoint, api_key, model } = config.confidentialmind;
 
@@ -10,7 +13,6 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
     throw new Error('ConfidentialMind not configured (CM_ENDPOINT / CM_API_KEY missing)');
   }
 
-  // OpenAI-compatible: base URL + /chat/completions
   const url = endpoint.replace(/\/+$/, '') + '/chat/completions';
 
   const body = {
@@ -19,10 +21,14 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    max_tokens: maxTokens || 2000,
+    max_tokens: maxTokens || MAX_TOKENS,
     temperature: temperature ?? 0.3,
-    chat_template_kwargs: { enable_thinking: false },
   };
+
+  // Disable thinking mode unless explicitly enabled
+  if (!USE_REASONING) {
+    body.chat_template_kwargs = { enable_thinking: false };
+  }
 
   if (responseFormat) {
     body.response_format = responseFormat;
@@ -50,32 +56,55 @@ async function chat({ systemPrompt, userMessage, responseFormat, maxTokens, temp
 
     const data = await res.json();
     const msg = data.choices?.[0]?.message;
-    const content = msg?.content;
 
-    // Qwen3 "thinking" mode: content may be null while reasoning is populated
-    if (content) {
-      return JSON.parse(content);
-    }
-
-    // Fallback: extract from reasoning field if content is empty
-    if (msg?.reasoning) {
-      const jsonMatch = msg.reasoning.match(/\{[\s\S]*"urgency"[\s\S]*\}/);
-      if (jsonMatch) return JSON.parse(jsonMatch[0]);
-
-      // If no JSON in reasoning, construct response from the reasoning text
-      return {
-        urgency: 'MEDIUM',
-        classification: 'ai_analysis',
-        confidence: 0.7,
-        reasoning: msg.reasoning.slice(-500),
-        broadcast_content: null,
-      };
-    }
-
-    throw new Error('ConfidentialMind returned empty response');
+    return extractResponse(msg);
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function extractResponse(msg) {
+  if (!msg) throw new Error('ConfidentialMind returned no message');
+
+  const content = msg.content;
+  const reasoning = msg.reasoning || msg.reasoning_content || msg.thinking;
+
+  // Strategy: try fields in priority order based on USE_REASONING flag
+  var primary = USE_REASONING ? [reasoning, content] : [content, reasoning];
+
+  for (var text of primary) {
+    if (!text) continue;
+
+    // Try direct JSON parse
+    try { return JSON.parse(text); } catch { /* not raw JSON */ }
+
+    // Try extracting JSON object from text
+    var match = text.match(/\{[\s\S]*"urgency"[\s\S]*?\}/);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch { /* malformed */ }
+    }
+
+    // Try extracting any JSON object
+    var anyJson = text.match(/\{[\s\S]*\}/);
+    if (anyJson) {
+      try { return JSON.parse(anyJson[0]); } catch { /* malformed */ }
+    }
+  }
+
+  // Last resort: construct from whatever text we have
+  var bestText = reasoning || content;
+  if (bestText) {
+    log.warn('Could not parse JSON from LLM response, constructing from text');
+    return {
+      urgency: 'MEDIUM',
+      classification: 'ai_analysis',
+      confidence: 0.6,
+      reasoning: bestText.slice(-800),
+      broadcast_content: null,
+    };
+  }
+
+  throw new Error('ConfidentialMind returned empty response');
 }
 
 async function health() {
@@ -85,7 +114,6 @@ async function health() {
     return { available: false, reason: 'not configured' };
   }
 
-  // OpenAI-compatible: base URL + /models
   const url = endpoint.replace(/\/+$/, '') + '/models';
 
   try {
