@@ -14,6 +14,7 @@ const demoScript = require('./demo/script');
 const population = require('./demo/population');
 const hqBrain = require('./hq_brain');
 const radioBridge = require('./radio_bridge');
+const meshViz = require('./mesh_visualizer');
 const transmission = require('./protocol/transmission');
 const mesh = require('./protocol/mesh');
 
@@ -130,6 +131,7 @@ server.listen(port, host, async () => {
   initHealthMonitor();
   radioBridge.init();
   population.init();
+  meshViz.init();
 
   // Store reasoning config in state so clients know on connect
   state.set('cm_reasoning_enabled', process.env.CM_USE_REASONING === 'true');

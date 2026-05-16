@@ -12,6 +12,7 @@ var EMPTY_STATE = {
   drones: {},
   jamming_zones: [],
   active_transmissions: [],
+  mesh_hops: [],
   active_alerts: [],
   stats: { packets_total: 0, packets_dropped: 0, sync_drift_ms: 0, ai_decisions: 0 },
   ai_reasoning: null,
@@ -539,6 +540,24 @@ if (isMock) {
         to: data.to,
         expires_at: Date.now() + 50,
       });
+    });
+
+    // Mesh hop-by-hop visualization
+    socket.on('mesh_hop', function(data) {
+      state.mesh_hops.push({
+        from: data.from,
+        to: data.to,
+        msgType: data.msgType,
+        isDroneHop: data.isDroneHop,
+        isFiberHop: data.isFiberHop,
+        final: data.final,
+        ts: Date.now(),
+        expires_at: Date.now() + 900,
+      });
+    });
+
+    socket.on('mesh_message_start', function(data) {
+      // Could show planned route as a dim path — for now just log
     });
 
     socket.on('jamming_zone_added', function(zone) {

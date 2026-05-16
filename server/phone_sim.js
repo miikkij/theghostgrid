@@ -2,6 +2,7 @@
 
 const { state } = require('./state');
 const log = require('./log').child({ component: 'phone_sim' });
+const meshViz = require('./mesh_visualizer');
 
 // Soldiers TX rarely (~15% of cycles) — only when they have data.
 // TX reveals position. Most cycles soldiers passively RX the sync
@@ -196,6 +197,7 @@ function initPhoneSim() {
 
   state.on('phone.unit_report', (data) => {
     updateUnitRecord(data.callsign, data.nodeData, data.msgType);
+    meshViz.injectMessage(data.callsign, data.msgType);
   });
 
   // HQ info request — triggers ALL soldiers (including virtual) to report
@@ -213,8 +215,8 @@ function initPhoneSim() {
         forcedTx.add(callsign);
         state.set(`nodes.${callsign}.state`, 'TX');
         state.broadcastTo('phone', 'node_state_change', { callsign, state: 'TX' });
-        // Update unit record with current position — this is the SITREP response
         updateUnitRecord(callsign, nodeData, 'STATUS');
+        meshViz.injectMessage(callsign, 'STATUS');
       }
       log.info({ count: phones.length }, 'SITREP requested — all units responding');
     }

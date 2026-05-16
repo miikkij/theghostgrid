@@ -45,6 +45,7 @@ class BattlefieldRenderer {
     this._drawDrones(state.drones, time);
     this._drawSyncPulses(state.cycle, state.drones, time);
     this._drawTransmissionArcs(state.active_transmissions, state.nodes, time);
+    this._drawMeshHops(state.mesh_hops, time);
     this._drawNodes(state.nodes, time);
     this._drawAlerts(state.active_alerts, state.nodes, time);
   }
@@ -346,6 +347,89 @@ class BattlefieldRenderer {
       ctx.beginPath();
       ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
+  // --- Mesh hop-by-hop visualization ---
+
+  _drawMeshHops(hops, time) {
+    if (!hops || hops.length === 0) return;
+    const ctx = this.ctx;
+    const now = Date.now();
+
+    for (let i = hops.length - 1; i >= 0; i--) {
+      const hop = hops[i];
+      if (now > hop.expires_at) {
+        hops.splice(i, 1);
+        continue;
+      }
+
+      const x1 = hop.from.position.x * this.width;
+      const y1 = hop.from.position.y * this.height;
+      const x2 = hop.to.position.x * this.width;
+      const y2 = hop.to.position.y * this.height;
+
+      const age = now - hop.ts;
+      const duration = 800;
+      const progress = Math.min(1, age / duration);
+
+      ctx.save();
+
+      // Color based on hop type
+      var color, glowColor;
+      if (hop.isFiberHop) {
+        color = '#4ADE80';
+        glowColor = 'rgba(74, 222, 128, 0.8)';
+      } else if (hop.isDroneHop) {
+        color = '#4ADE80';
+        glowColor = 'rgba(74, 222, 128, 0.6)';
+      } else {
+        color = '#FBBF24';
+        glowColor = 'rgba(251, 191, 36, 0.6)';
+      }
+
+      // Trail line (fades in)
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.3;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + (x2 - x1) * progress, y1 + (y2 - y1) * progress);
+      ctx.stroke();
+
+      // Traveling packet dot
+      var dotX = x1 + (x2 - x1) * progress;
+      var dotY = y1 + (y2 - y1) * progress;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Message type label near the dot
+      if (hop.msgType && progress < 0.8) {
+        ctx.shadowBlur = 0;
+        ctx.font = '500 7px "JetBrains Mono", monospace';
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.7;
+        ctx.textAlign = 'center';
+        ctx.fillText(hop.msgType, dotX, dotY - 8);
+      }
+
+      // Flash at destination when arriving
+      if (progress > 0.9 && hop.final) {
+        ctx.globalAlpha = 1 - (progress - 0.9) * 10;
+        ctx.fillStyle = '#4ADE80';
+        ctx.shadowColor = 'rgba(74, 222, 128, 0.8)';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(x2, y2, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     }
