@@ -266,14 +266,16 @@
     if (dom.drift) dom.drift.textContent = (state.stats.sync_drift_ms || 0) + 'ms';
     if (dom.aiStatus) {
       var backend = state.adapters.cm_backend;
+      var hasReasoning = state.ai_reasoning && state.ai_reasoning.thinking;
+      var suffix = hasReasoning ? ' (+reasoning)' : '';
       if (backend === 'ollama') {
-        dom.aiStatus.textContent = 'Ollama';
+        dom.aiStatus.textContent = 'Ollama' + suffix;
         dom.aiStatus.style.color = 'var(--accent-green)';
       } else if (backend === 'confidentialmind') {
-        dom.aiStatus.textContent = 'HQ.Brain';
+        dom.aiStatus.textContent = 'HQ.Brain' + suffix;
         dom.aiStatus.style.color = 'var(--accent-green)';
       } else if (state.adapters.cm === 'ok') {
-        dom.aiStatus.textContent = 'Active';
+        dom.aiStatus.textContent = 'Active' + suffix;
         dom.aiStatus.style.color = 'var(--accent-green)';
       } else {
         dom.aiStatus.textContent = 'Off';
