@@ -99,8 +99,11 @@
       addEvent(event);
     });
 
-    // AI decisions — listen for both name variants (dot and underscore)
+    // AI decisions — deduplicate by log_id
+    var seenDecisionIds = {};
     function handleAIDecision(decision) {
+      if (decision.log_id && seenDecisionIds[decision.log_id]) return;
+      if (decision.log_id) seenDecisionIds[decision.log_id] = true;
       state.ai_reasoning = decision;
       state.ai_history.unshift(decision);
       if (state.ai_history.length > MAX_AI_HISTORY) state.ai_history.length = MAX_AI_HISTORY;

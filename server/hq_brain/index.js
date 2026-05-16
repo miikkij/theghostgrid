@@ -58,7 +58,6 @@ async function init(stateRef) {
 
   state.on('ai.decision', (decision) => {
     lastReasoning = decision;
-    state.broadcast('ai_decision', decision);
   });
 
   state.on('hq.broadcast_proposed', (broadcast) => {

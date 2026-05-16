@@ -105,20 +105,14 @@ function initRouter() {
     broadcastEvent('alert', data.message || 'Alert triggered');
   });
 
-  // Forward AI decisions to screen and ops (both event name variants)
+  // Forward AI decisions to screen and ops
   state.on('hq.broadcast_proposed', (data) => {
-    state.broadcastTo('screen', 'ai_decision', data);
-    state.broadcastTo('ops', 'ai_decision', data);
-    // Also emit with dot notation for clients that use it
-    state.broadcastTo('ops', 'ai.decision', data);
-    log.info({ urgency: data.urgency }, 'AI decision routed');
+    log.info({ urgency: data.urgency }, 'AI broadcast routed');
   });
 
-  // Forward AI decisions emitted by hq_brain/index.js
   state.on('ai.decision', (data) => {
     state.broadcastTo('screen', 'ai_decision', data);
     state.broadcastTo('ops', 'ai_decision', data);
-    state.broadcastTo('ops', 'ai.decision', data);
   });
 
   // Forward transmission arcs to screen
