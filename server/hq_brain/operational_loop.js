@@ -70,9 +70,14 @@ async function runOperationalCycle() {
     log.info('No choreography changes recommended');
   }
 
+  const changeCount = result.recommended_changes ? result.recommended_changes.length : 0;
   state.emit('ai.decision', {
     loop: 'operational',
-    decision: result,
+    classification: 'choreography_update',
+    confidence: typeof result.confidence === 'number' ? result.confidence : 0.5,
+    reasoning: result.rationale || result.reasoning || 'Operational analysis complete',
+    urgency: changeCount > 0 ? 'MEDIUM' : 'LOW',
+    summary: 'Choreography: ' + changeCount + ' change' + (changeCount !== 1 ? 's' : '') + ' recommended',
     elapsed_ms: Date.now() - startMs,
     log_id: auditEntry.log_id,
   });
