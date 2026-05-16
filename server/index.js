@@ -120,6 +120,9 @@ server.listen(port, host, async () => {
   radioBridge.init();
   population.init();
 
+  // Store reasoning config in state so clients know on connect
+  state.set('cm_reasoning_enabled', process.env.CM_USE_REASONING === 'true');
+
   // Init HQ Brain (async — selects LLM backend)
   try {
     await hqBrain.init(state);

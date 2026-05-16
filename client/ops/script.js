@@ -238,6 +238,10 @@
         if (trigger) Controls.setPatternActive(trigger, true);
       }
     }
+    if (data.cm_reasoning_enabled != null) {
+      state._reasoningConfigured = true;
+      state._reasoningEnabled = data.cm_reasoning_enabled;
+    }
     if (data.units) {
       state.units = data.units;
       renderUnits();
@@ -278,9 +282,7 @@
       else if (state.adapters.cm === 'ok') { label = 'Active'; color = 'var(--accent-green)'; }
 
       // Reasoning toggle — only shown when reasoning was configured
-      var reasoningConfigured = state.ai_reasoning && state.ai_reasoning.thinking;
-      if (reasoningConfigured || state._reasoningConfigured) {
-        state._reasoningConfigured = true;
+      if (state._reasoningConfigured) {
         var reasoningOn = state._reasoningEnabled !== false;
         var tag = document.getElementById('reasoning-toggle');
         if (!tag) {
