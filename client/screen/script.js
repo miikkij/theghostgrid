@@ -106,13 +106,13 @@ function updateOverlays() {
   }
   if (overlayRefs.aiStatus) {
     if (state.ai_reasoning && state.ai_reasoning.classification === 'llm_unavailable') {
-      overlayRefs.aiStatus.textContent = 'DEGRADED';
-      overlayRefs.aiStatus.style.color = 'var(--accent-amber)';
+      overlayRefs.aiStatus.textContent = 'Off';
+      overlayRefs.aiStatus.style.color = 'var(--text-muted)';
     } else if (state.ai_reasoning) {
-      overlayRefs.aiStatus.textContent = 'ACTIVE';
+      overlayRefs.aiStatus.textContent = 'Ollama';
       overlayRefs.aiStatus.style.color = 'var(--accent-green)';
     } else {
-      overlayRefs.aiStatus.textContent = 'STANDBY';
+      overlayRefs.aiStatus.textContent = 'Off';
       overlayRefs.aiStatus.style.color = 'var(--text-muted)';
     }
   }

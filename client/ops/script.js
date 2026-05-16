@@ -234,10 +234,20 @@
     if (dom.pps) dom.pps.textContent = state.stats.pps || 0;
     if (dom.drift) dom.drift.textContent = (state.stats.sync_drift_ms || 0) + 'ms';
     if (dom.aiStatus) {
-      var aiOn = state.ai_reasoning !== null ||
-        (state.adapters.cm && state.adapters.cm === 'ok');
-      dom.aiStatus.textContent = aiOn ? 'ON' : 'OFF';
-      dom.aiStatus.style.color = aiOn ? 'var(--accent-green)' : 'var(--text-muted)';
+      var backend = state.adapters.cm_backend;
+      if (backend === 'ollama') {
+        dom.aiStatus.textContent = 'Ollama';
+        dom.aiStatus.style.color = 'var(--accent-green)';
+      } else if (backend === 'confidentialmind') {
+        dom.aiStatus.textContent = 'HQ.Brain';
+        dom.aiStatus.style.color = 'var(--accent-green)';
+      } else if (state.adapters.cm === 'ok') {
+        dom.aiStatus.textContent = 'Active';
+        dom.aiStatus.style.color = 'var(--accent-green)';
+      } else {
+        dom.aiStatus.textContent = 'Off';
+        dom.aiStatus.style.color = 'var(--text-muted)';
+      }
     }
   }
 
