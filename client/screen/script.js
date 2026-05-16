@@ -674,10 +674,30 @@ if (isMock) {
       });
     }
 
+    // Pitch visual events (wordmark, tagline, closing)
+    socket.on('pitch_visual', function (data) {
+      var wordmark = document.getElementById('pitch-wordmark');
+      var tagline = document.getElementById('pitch-tagline');
+      if (!data) return;
+
+      if (data.type === 'wordmark' && wordmark) {
+        wordmark.classList.remove('hidden');
+        if (tagline) { tagline.textContent = ''; tagline.classList.remove('visible'); }
+      } else if (data.type === 'tagline' && tagline) {
+        tagline.textContent = data.text;
+        tagline.classList.add('visible');
+      } else if (data.type === 'closing') {
+        setTimeout(function () {
+          if (wordmark) wordmark.classList.add('hidden');
+          document.body.classList.remove('pitch-active');
+        }, 10000);
+      }
+    });
+
     // Listen for pitch completion to restore UI
     socket.on('demo_step', function (data) {
-      if (data && data.message && data.message.indexOf('Sync on fiber') >= 0) {
-        document.body.classList.remove('pitch-active');
+      if (data && data.message && data.message.indexOf('single fact') >= 0) {
+        // Handled by pitch_visual closing event
       }
     });
   }

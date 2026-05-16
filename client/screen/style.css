@@ -360,6 +360,76 @@ body.cursor-visible {
   opacity: 0;
 }
 
+/* --- Pitch closing wordmark --- */
+
+.pitch-wordmark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  background: rgba(10, 14, 26, 0.9);
+  transition: opacity 1s var(--ease-default);
+}
+
+.pitch-wordmark.hidden { opacity: 0; pointer-events: none; }
+
+.pitch-wordmark-title {
+  font-family: var(--font-sans);
+  font-size: 5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-bright);
+  line-height: 1.1;
+}
+
+.pitch-wordmark .ghost-o {
+  position: relative;
+  display: inline-block;
+  color: #7DD3E8;
+  text-shadow: 0 0 16px rgba(125, 211, 232, 0.5);
+}
+
+.pitch-wordmark .ghost-o::before {
+  content: 'O';
+  position: absolute;
+  left: -0.06em;
+  top: -0.04em;
+  color: rgba(125, 211, 232, 0.3);
+  filter: blur(2px);
+  animation: ghost-drift 3s ease-in-out infinite alternate;
+}
+
+.pitch-wordmark .ghost-o::after {
+  content: 'O';
+  position: absolute;
+  left: 0.06em;
+  top: 0.04em;
+  color: rgba(125, 211, 232, 0.2);
+  filter: blur(3px);
+  animation: ghost-drift 3s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes ghost-drift {
+  0%   { transform: translate(0, 0);        opacity: 0.3; }
+  50%  { transform: translate(0.04em, -0.02em); opacity: 0.5; }
+  100% { transform: translate(-0.03em, 0.03em); opacity: 0.2; }
+}
+
+.pitch-wordmark-tagline {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  margin-top: 24px;
+  letter-spacing: 0.05em;
+  transition: opacity 1s;
+  opacity: 0;
+}
+
+.pitch-wordmark-tagline.visible { opacity: 1; }
+
 /* --- Pitch countdown --- */
 
 .pitch-countdown {
