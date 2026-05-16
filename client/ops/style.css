@@ -164,6 +164,11 @@ body {
   border-color: var(--border-default);
 }
 
+#controls .btn > span:first-child {
+  letter-spacing: 0.02em;
+  word-spacing: 0.25em;
+}
+
 /* Color-coded left borders by category */
 .btn-danger  { border-left: 4px solid var(--accent-red); }
 .btn-warn    { border-left: 4px solid var(--accent-amber); }
