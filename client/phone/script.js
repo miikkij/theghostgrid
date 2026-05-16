@@ -481,8 +481,8 @@
       var dx = waypoint.x - node.area.x;
       var dy = waypoint.y - node.area.y;
       var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 0.008) {
-        var speed = 0.002;
+      if (dist > 0.005) {
+        var speed = 0.004;
         node.area.x += (dx / dist) * speed;
         node.area.y += (dy / dist) * speed;
         if (socket) socket.emit('phone.move', { callsign: node.callsign, position: node.area });
