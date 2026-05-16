@@ -238,11 +238,30 @@ function onCycleBurst(data) {
 
       if (_state) {
         _state.emit('radio.frame_received_simulated', frame);
+        _state.set(`nodes.${decoy.nodeId}.state`, 'TX');
       }
 
       transmitCount++;
     } else {
+      if (decoy.state === NODE_STATES.TX && _state) {
+        _state.set(`nodes.${decoy.nodeId}.state`, 'LISTENING');
+      }
       decoy.state = NODE_STATES.LISTENING;
+    }
+  }
+
+  // Generate transmission arcs between nearby transmitting decoys for big screen
+  if (_state && transmitCount > 1) {
+    const txDecoys = [..._decoys.values()].filter((d) => d.state === NODE_STATES.TX);
+    const arcCount = Math.min(txDecoys.length, 8);
+    for (let i = 0; i < arcCount; i++) {
+      const a = txDecoys[i];
+      const b = txDecoys[(i + 1) % txDecoys.length];
+      _state.emit('transmission.frame_transmitted', {
+        from: a.nodeId,
+        to: b.nodeId,
+        cycle: cycleNumber,
+      });
     }
   }
 
