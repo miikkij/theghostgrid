@@ -119,10 +119,15 @@ function generatePosition(index, total) {
     });
   }
   const center = squadCenters[squad];
-  const scatter = 0.06;
+  // Spread soldiers in a grid-like pattern within the squad area
+  const memberIdx = Math.floor(index / numSquads);
+  const cols = 3;
+  const col = memberIdx % cols;
+  const row = Math.floor(memberIdx / cols);
+  const spacing = 0.035;
   return {
-    x: clamp(center.x + (Math.random() - 0.5) * scatter, 0.08, 0.92),
-    y: clamp(center.y + (Math.random() - 0.5) * scatter, 0.08, 0.85),
+    x: clamp(center.x + (col - 1) * spacing + (Math.random() - 0.5) * 0.01, 0.08, 0.92),
+    y: clamp(center.y + (row - 1) * spacing + (Math.random() - 0.5) * 0.01, 0.08, 0.85),
   };
 }
 
