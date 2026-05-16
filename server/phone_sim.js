@@ -34,7 +34,7 @@ function pickMessageType() {
 
 function getPhoneNodes() {
   const nodes = state.get('nodes') || {};
-  return Object.entries(nodes).filter(([, n]) => n.type === 'soldier' && n.state !== 'DEAD');
+  return Object.entries(nodes).filter(([, n]) => n.type === 'soldier' && n.state !== 'DEAD' && !n.virtual);
 }
 
 function distance(a, b) {
@@ -198,10 +198,11 @@ function initPhoneSim() {
     updateUnitRecord(data.callsign, data.nodeData, data.msgType);
   });
 
-  // HQ info request — triggers all soldiers to send STATUS next cycle
+  // HQ info request — triggers ALL soldiers (including virtual) to report
   state.on('ops.trigger_scenario', (data) => {
     if (data.scenario === 'request_sitrep') {
-      var phones = getPhoneNodes();
+      var allSoldiers = Object.entries(state.get('nodes') || {}).filter(([, n]) => n.type === 'soldier' && n.state !== 'DEAD');
+      var phones = allSoldiers;
       // Notify phones about HQ request
       state.broadcastTo('phone', 'phone.hq_request', {
         type: 'SITREP',
