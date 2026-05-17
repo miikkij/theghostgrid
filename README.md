@@ -118,11 +118,11 @@ npm run lint                # ESLint
 
 ## Honest framing
 
-Built during a 48-hour hackathon event with significant AI acceleration in documentation and code generation. Software components at TRL 4; hardware and full RF integration at TRL 2–3. Transparency log in [`HISTORY-LOG.md`](HISTORY-LOG.md).
+Built during a 48-hour hackathon event with significant AI acceleration in documentation and code generation. Software components at TRL 4; hardware and full RF integration at TRL 2–3. Transparency log in [`HISTORY-LOG.md`](docs/HISTORY-LOG.md).
 
 ## Documentation
 
-Full design specification: [`docs/00-README.md`](docs/00-README.md) · Build components: [`docs/06-build-components.md`](docs/06-build-components.md)
+Full design specification: [`docs/00-README.md`](docs/00-README.md) · Build components: [`docs/06-build-components.md`](docs/06-build-components.md) · Partner specs: [`docs/partner-specs/`](docs/partner-specs/00-INDEX.md) · Compliance: [`docs/COMPLIANCE-REPORT.md`](docs/COMPLIANCE-REPORT.md)
 
 ---
 

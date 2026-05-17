@@ -44,13 +44,19 @@ This architecture addresses each failure mode at the protocol level rather than 
 ### Implementation
 
 - **[06-build-components.md](06-build-components.md)** — Component inventory, interface contracts, dependencies, definition of done
+- **[06-implementation-plan.md](06-implementation-plan.md)** — 48-hour hackathon build plan, scope decisions, schedule
 - **[07-implementation-stack.md](07-implementation-stack.md)** — Technical stack, libraries, hardware, deployment topology
 - **[08-demo-and-pitch.md](08-demo-and-pitch.md)** — Demo narrative emphasizing the sync-beacon hook, pitch script, partner conversations
+- **[08-implementation-demo.md](08-implementation-demo.md)** — Detailed demo script and pitch execution plan
 - **[10-ui-design.md](10-ui-design.md)** — UI specifications for big screen, operator dashboard, audience phone, landing page
 
-### Roadmap
+### Transparency
 
-- **[09-roadmap.md](09-roadmap.md)** — Post-event technical and commercial roadmap
+- **[HISTORY-LOG.md](HISTORY-LOG.md)** — Transparency log: AI usage, timeline, honest framing
+
+### Partner specifications
+
+- **[partner-specs/00-INDEX.md](partner-specs/00-INDEX.md)** — Technical spec sheets for partner conversations (sync beacon, transmission, mesh, decoy hardware, honeypots, AI, economics)
 
 ## Key concepts at a glance
 
