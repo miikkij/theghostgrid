@@ -110,11 +110,4 @@ function reset() {
   state = null;
 }
 
-module.exports = {
-  init,
-  ingestEvent,
-  getAuditTrail,
-  getLastReasoning,
-  triggerOperationalLoop,
-  reset,
-};
+module.exports = { init, reset };

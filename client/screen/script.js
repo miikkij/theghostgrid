@@ -590,6 +590,10 @@ if (isMock) {
       state.active_alerts.push({ expires_at: Date.now() + 5000, nodeId: alert.nodeId, caption: alert.caption });
     });
 
+    socket.on('full_reset', function() {
+      window.location.reload();
+    });
+
     socket.on('ai.decision', function(decision) {
       state.ai_reasoning = decision;
       state.stats.ai_decisions++;

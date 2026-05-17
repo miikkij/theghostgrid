@@ -112,6 +112,22 @@ function attachWebSocket(httpServer) {
       }
     });
 
+    socket.on('ops.set_roe', (data) => {
+      if (data && data.state) {
+        state.emit('ops.set_roe', data);
+      }
+    });
+
+    socket.on('ops.get_routing_table', (data, callback) => {
+      const mesh = require('./protocol/mesh');
+      const nodeId = data && data.nodeId;
+      if (nodeId && typeof callback === 'function') {
+        const table = mesh.getRoutingTable(nodeId);
+        const neighbors = mesh.getNeighbors(nodeId);
+        callback({ nodeId, routes: table, neighbors });
+      }
+    });
+
     socket.on('phone.move', (data) => {
       const client = clients.get(socket.id);
       if (client && client.callsign && data.position) {

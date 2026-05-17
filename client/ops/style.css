@@ -197,6 +197,10 @@ body {
   border-color: var(--accent-cyan);
 }
 
+.roe-control { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.roe-label { font-size: 10px; color: #8cf; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+.roe-select { background: #1a1a2e; color: #e0e0e0; border: 1px solid #333; font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 2px 4px; }
+
 /* Keyboard shortcut badge */
 .kbd {
   display: inline-flex;

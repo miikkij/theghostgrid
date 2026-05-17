@@ -106,5 +106,4 @@ All recommendations require commander approval before execution. Never auto-exec
 module.exports = {
   TACTICAL_LOOP_PROMPT,
   OPERATIONAL_LOOP_PROMPT,
-  STRATEGIC_LOOP_PROMPT,
 };

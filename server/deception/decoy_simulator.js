@@ -35,27 +35,6 @@ function init(state) {
 
   _state.on('cycle.sync_beta_burst', onCycleBurst);
 
-  _state.on('ops.trigger_decoys_on', (data) => {
-    const count = data?.count || 47;
-    const area = data?.area || { x: [0, 1], y: [0, 1] };
-    spawnDecoys(count, area);
-  });
-
-  _state.on('ops.trigger_pattern', (data) => {
-    if (data?.patternName) {
-      wavePatterns.activate({
-        patternName: data.patternName,
-        parameters: data.parameters || {},
-      });
-    }
-  });
-
-  _state.on('ops.trigger_honeypot', (data) => {
-    if (data?.nodeId && data?.eventType) {
-      honeypot.trigger(data.nodeId, data.eventType, data.eventData || {});
-    }
-  });
-
   _state.on('ops.reset', () => {
     reset();
   });

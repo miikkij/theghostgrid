@@ -196,5 +196,4 @@ module.exports = {
   composeFrame,
   parseFrame,
   getHopSequence,
-  getConfig,
 };

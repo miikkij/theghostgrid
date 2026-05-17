@@ -57,7 +57,8 @@ async function runOperationalCycle() {
     action_taken: { type: 'choreography_update', changes: result.recommended_changes },
   });
 
-  if (result.recommended_changes.length > 0) {
+  const roe = require('./roe');
+  if (result.recommended_changes.length > 0 && roe.canUpdateChoreography()) {
     state.emit('ops.update_choreography', {
       changes: result.recommended_changes,
       rationale: result.rationale,
@@ -65,6 +66,8 @@ async function runOperationalCycle() {
       log_id: auditEntry.log_id,
     });
     log.info({ changeCount: result.recommended_changes.length }, 'Choreography update emitted');
+  } else if (result.recommended_changes.length > 0) {
+    log.info({ roe: roe.getState() }, 'Choreography changes blocked by ROE');
   } else {
     log.info('No choreography changes recommended');
   }

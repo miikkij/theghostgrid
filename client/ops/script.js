@@ -61,8 +61,22 @@
   }
 
   if (socket) {
+    window._socket = socket;
     Controls.init(socket);
     bindSocketEvents(socket);
+
+    var routingList = document.getElementById('routing-node-list');
+    if (routingList) {
+      routingList.addEventListener('click', function (e) {
+        var nodeId = e.target.dataset.routeNode;
+        if (!nodeId) return;
+        window._selectedRoutingNode = nodeId;
+        updateRoutingNodeList();
+        socket.emit('ops.get_routing_table', { nodeId: nodeId }, function (data) {
+          renderRoutingTable(data);
+        });
+      });
+    }
   }
 
   // --- Socket event bindings ---
@@ -91,10 +105,14 @@
       var isNew = !state.nodes[data.nodeId];
       if (isNew) state.nodes[data.nodeId] = {};
       Object.assign(state.nodes[data.nodeId], data);
+      window._lastNodes = state.nodes;
       updateStatusBar();
-      // Enable pattern buttons when first decoy/honeypot appears
       if (isNew && (data.type === 'decoy' || data.type === 'honeypot')) {
         Controls.setDecoysActive(true);
+      }
+      var routingTab = document.getElementById('tab-routing');
+      if (routingTab && routingTab.classList.contains('active')) {
+        updateRoutingNodeList();
       }
     });
 
@@ -119,6 +137,15 @@
     }
     sock.on('ai.decision', handleAIDecision);
     sock.on('ai_decision', handleAIDecision);
+
+    sock.on('roe_state_changed', function (data) {
+      var sel = document.getElementById('roe-select');
+      if (sel && data.state) sel.value = data.state;
+    });
+
+    sock.on('full_reset', function () {
+      window.location.reload();
+    });
 
     sock.on('adapter_status', function (data) {
       state.adapters[data.adapter] = data.status;
@@ -277,6 +304,7 @@
       linear_translation: 'pattern_linear',
       phantom_convoy: 'pattern_convoy',
       radial_expansion: 'pattern_radial',
+      random_walk_cluster: 'pattern_cluster',
     };
     return map[name] || null;
   }
@@ -830,6 +858,7 @@
         + '<p><strong>Linear Wave</strong> — Decoys emit in a band sweeping across the area. Looks like a battalion moving in one direction.</p>'
         + '<p><strong>Phantom Convoy</strong> — Activation propagates along a path, simulating a convoy or patrol route.</p>'
         + '<p><strong>Radial Expansion</strong> — Expanding ring of activity from a center point, simulating forces deploying outward.</p>'
+        + '<p><strong>Random Walk</strong> — A cluster of decoy emissions meanders across the area following a seeded pseudo-random path. Simulates a patrol or observation post moving unpredictably.</p>'
         + '<p>Pattern buttons toggle — click once to activate (green border), click again to deactivate. Multiple patterns can run simultaneously.</p>'
     },
     ai: {
@@ -837,6 +866,12 @@
       body: '<p>The HQ Brain is an AI running on ConfidentialMind\'s sovereign infrastructure (or Ollama locally). It processes tactical events and makes decisions.</p>'
         + '<p><strong>Force AI Adaptation</strong> — Triggers the operational AI loop, which analyzes the last 15 minutes of activity and recommends changes to the deception choreography. The AI reasoning appears in the AI panel on the right.</p>'
         + '<p><strong>Request SITREP</strong> — HQ requests a status report from ALL soldiers simultaneously. Every unit transmits their STATUS on the next sync pulse. The big screen lights up with transmission arcs as all units report in. The Units tab updates with battery, ammo, and position data.</p>'
+        + '<p><strong>ROE (Rules of Engagement)</strong> — Controls the AI\'s authority level. The ROE state machine constrains what the AI is allowed to do:</p>'
+        + '<p style="margin-left:12px"><strong>PEACETIME</strong> — AI logs events only. Max urgency LOW. No auto-broadcasts, no choreography changes.</p>'
+        + '<p style="margin-left:12px"><strong>DEFENSIVE</strong> — AI can recommend actions. Max urgency MEDIUM. Choreography updates allowed, but no auto-broadcasts to field units.</p>'
+        + '<p style="margin-left:12px"><strong>ACTIVE</strong> — Full authority. HIGH urgency auto-broadcasts to phones. Choreography updates active. This is the default for the demo.</p>'
+        + '<p style="margin-left:12px"><strong>EMERGENCY</strong> — Same as ACTIVE. Reserved for future escalation rules.</p>'
+        + '<p>ROE enforcement is programmatic, not prompt-based. The AI cannot override its ROE state regardless of its reasoning. Change ROE to PEACETIME, then trigger a honeypot — the AI will classify the threat but the broadcast is blocked.</p>'
         + '<p>The AI status in the top bar shows which backend is active (HQ.Brain = ConfidentialMind, Ollama = local). The (+reasoning) toggle enables/disables the model\'s thinking mode.</p>'
     },
     system: {
@@ -883,6 +918,16 @@
         + '<p><strong>Move speed</strong> — how fast soldiers drift (0-10). Higher = faster patrol movement.</p>'
         + '<p><strong>Jamming interval</strong> — cycles between ambient jamming events.</p>'
         + '<p>All settings take effect immediately. By default everything is off — the big screen stays clean until you activate simulation features.</p>'
+    },
+    routing: {
+      title: 'Mesh Routing Table',
+      body: '<p>Inspect the real Bellman-Ford distance-vector routing table for any node in the mesh.</p>'
+        + '<p><strong>How to use:</strong> Click any node ID in the list. The panel shows that node\'s view of the network — its neighbors and the routes it has computed to every reachable destination.</p>'
+        + '<p><strong>NEIGHBORS</strong> — Nodes within radio range (0.3 normalized units). Each shows a signal quality score (1.0 = adjacent, 0.0 = at max range). Neighbors are discovered automatically from received frames and recomputed every 5 cycles.</p>'
+        + '<p><strong>ROUTES</strong> — Destination, next hop, hop count, and path quality. Routes are computed by Bellman-Ford: each node advertises its known routes to its neighbors every 3 cycles. Convergence takes 5-10 cycles after topology changes.</p>'
+        + '<p><strong>HQ route</strong> — Nodes with a drone neighbor get a 2-hop route to HQ (ground node → drone → fiber → HQ). This is the primary uplink path for honeypot reports and sitreps.</p>'
+        + '<p><strong>After jamming:</strong> Click "Inject Jamming" then inspect a node near the jam zone. You\'ll see neighbors disappear and routes reconverge around the dead zone.</p>'
+        + '<p><strong>After Destroy Node:</strong> The destroyed node vanishes from neighbor tables. Remaining nodes recompute routes within 3 cycles.</p>'
     },
     ai_reasoning: {
       title: 'AI Reasoning Panel',
@@ -940,6 +985,51 @@
   }
 
   // =============================================
+  // --- Routing Table Tab ---
+
+  function updateRoutingNodeList() {
+    var container = document.getElementById('routing-node-list');
+    if (!container) return;
+    var nodes = window._lastNodes || {};
+    var ids = Object.keys(nodes).filter(function (id) {
+      var n = nodes[id];
+      return n.state !== 'DEAD' && n.type !== 'decoy' && n.type !== 'honeypot';
+    }).sort();
+    container.innerHTML = ids.map(function (id) {
+      var sel = id === window._selectedRoutingNode;
+      return '<span style="color:' + (sel ? '#0ff' : '#888') + ';cursor:pointer;margin-right:6px;" data-route-node="' + id + '">' + id + '</span>';
+    }).join('');
+  }
+
+  function renderRoutingTable(data) {
+    var container = document.getElementById('routing-table-content');
+    if (!container || !data) return;
+    var html = '<div style="color:#0ff;margin-bottom:4px;">' + data.nodeId + ' — ' + (data.neighbors ? data.neighbors.length : 0) + ' neighbors</div>';
+
+    if (data.neighbors && data.neighbors.length > 0) {
+      html += '<div style="color:#666;margin-bottom:2px;">NEIGHBORS:</div>';
+      data.neighbors.forEach(function (n) {
+        html += '<div style="color:#8cf;padding-left:8px;">' + n.nodeId + ' q=' + (n.signalQuality || 0).toFixed(2) + '</div>';
+      });
+    }
+
+    var routes = data.routes || {};
+    var dests = Object.keys(routes);
+    if (dests.length > 0) {
+      html += '<div style="color:#666;margin-top:4px;margin-bottom:2px;">ROUTES:</div>';
+      html += '<table style="font-size:10px;width:100%;"><tr style="color:#666;"><td>DEST</td><td>NEXT HOP</td><td>HOPS</td><td>Q</td></tr>';
+      dests.forEach(function (dest) {
+        var r = routes[dest];
+        html += '<tr><td style="color:#e0e0e0;">' + dest + '</td><td style="color:#8cf;">' + r.nextHop + '</td><td>' + r.hopCount + '</td><td>' + (r.quality || 0).toFixed(2) + '</td></tr>';
+      });
+      html += '</table>';
+    } else {
+      html += '<div style="color:#666;margin-top:4px;">No routes computed yet.</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
   // Mock mode — standalone testing without server
   // =============================================
 

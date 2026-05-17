@@ -165,10 +165,10 @@ async function testTacticalLoopProcessesThreeEvents() {
 
   // Verify reasoning traces
   assert(
-    decisions[0].decision.reasoning.includes('HP-23'),
+    decisions[0].reasoning.includes('HP-23'),
     'First decision reasoning references source node',
   );
-  assert(decisions[2].decision.urgency === 'LOW', 'Third decision is LOW urgency');
+  assert(decisions[2].urgency === 'LOW', 'Third decision is LOW urgency');
 
   // Verify audit entries have complete structure
   const entries = audit.query({});
@@ -372,10 +372,10 @@ async function testResponseNormalization() {
   await new Promise((resolve) => setTimeout(resolve, 100));
 
   assert(decisions.length === 1, 'Decision emitted for malformed response');
-  assert(decisions[0].decision.urgency === 'LOW', 'Invalid urgency normalized to LOW');
-  assert(decisions[0].decision.classification === 'unknown', 'Null classification normalized to unknown');
-  assert(decisions[0].decision.confidence === 1.0, 'Confidence clamped to 1.0');
-  assert(decisions[0].decision.reasoning === 'No reasoning provided', 'Missing reasoning gets default');
+  assert(decisions[0].urgency === 'LOW', 'Invalid urgency normalized to LOW');
+  assert(decisions[0].classification === 'unknown', 'Null classification normalized to unknown');
+  assert(decisions[0].confidence === 1.0, 'Confidence clamped to 1.0');
+  assert(decisions[0].reasoning === 'No reasoning provided', 'Missing reasoning gets default');
 
   tacticalLoop.reset();
   audit.reset();

@@ -344,6 +344,10 @@
     showAlert(alert);
   });
 
+  socket.on('full_reset', function () {
+    window.location.reload();
+  });
+
   // HQ requests — queue a response only when HQ asks
   socket.on('phone.hq_request', function (req) {
     if (req.callsign && req.callsign !== node.callsign) return;

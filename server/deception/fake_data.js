@@ -62,9 +62,6 @@ function getStrategy() {
 }
 
 module.exports = {
-  PAYLOAD_SIZE,
   init,
   generatePayload,
-  setStrategy,
-  getStrategy,
 };

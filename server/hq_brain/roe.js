@@ -61,4 +61,4 @@ function canUpdateChoreography() {
   return ALLOWED_ACTIONS[currentState]?.choreographyUpdate ?? false;
 }
 
-module.exports = { STATES, setState, getState, enforce, canUpdateChoreography };
+module.exports = { setState, getState, enforce, canUpdateChoreography };

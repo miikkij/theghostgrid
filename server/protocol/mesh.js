@@ -34,7 +34,12 @@ function init(state, config) {
     const srcPos = srcNode?.position || srcDrone?.position;
     if (!srcPos) return;
 
-    // Only process routing for non-cover frames to limit CPU
+    // Decoys emit frames (for deception) but don't participate in mesh routing.
+    // Their frames are received by the transmission layer for protocol
+    // indistinguishability, but the mesh layer ignores them for routing.
+    const srcType = srcNode?.type || (srcDrone ? 'drone' : 'ground');
+    if (srcType === 'decoy' || srcType === 'honeypot') return;
+
     const meshPayload = frameData.mesh;
     const isRoutable = meshPayload && meshPayload.dst && meshPayload.class !== 'cover';
 
@@ -43,11 +48,9 @@ function init(state, config) {
       const table = _neighbors.get(nodeId);
 
       if (table.has(sourceNode)) {
-        // Update last-seen timestamp for existing neighbor
         table.get(sourceNode).lastSeen = _currentCycle;
         if (isRoutable) handleReceivedFrame(nodeId, frameData);
       } else {
-        // Discover new neighbor via range check
         const nNode = nodes[nodeId];
         const nDrone = drones[nodeId];
         const nPos = nNode?.position || nDrone?.position;
@@ -64,7 +67,6 @@ function init(state, config) {
       }
     }
 
-    // Bootstrap: nodes not yet tracked in _neighbors
     const allIds = [...Object.keys(nodes), ...Object.keys(drones)];
     for (const nodeId of allIds) {
       if (nodeId === sourceNode) continue;
@@ -72,6 +74,8 @@ function init(state, config) {
       const nNode = nodes[nodeId];
       const nDrone = drones[nodeId];
       if (nNode?.state === 'DEAD' || nDrone?.status === 'destroyed') continue;
+      // Don't add decoys to the routing graph
+      if (nNode?.type === 'decoy' || nNode?.type === 'honeypot') continue;
       const nPos = nNode?.position || nDrone?.position;
       if (!nPos) continue;
       const dx = srcPos.x - nPos.x;
@@ -314,6 +318,12 @@ function declareJammed(area) {
   }
 
   if (_state) {
+    _state.emit('mesh.jamming_detected', {
+      timestamp: Date.now(),
+      affected_nodes: affected,
+      affected_area: area,
+      frequency_band: '2.4 GHz',
+    });
     _state.emit('mesh.routing_converged', { reason: 'jamming', affected, area });
   }
 
@@ -406,9 +416,12 @@ function computeNeighborsFromState() {
   const drones = _state.get('drones') || {};
   const range = _config.RADIO_RANGE;
 
+  // Only real nodes and drones participate in mesh routing.
+  // Decoys emit their own frames but do not relay real traffic.
   const all = {};
   for (const [id, n] of Object.entries(nodes)) {
     if (!n.position || n.state === 'DEAD') continue;
+    if (n.type === 'decoy' || n.type === 'honeypot') continue;
     all[id] = { position: n.position, type: n.type || 'ground' };
   }
   for (const [id, d] of Object.entries(drones)) {

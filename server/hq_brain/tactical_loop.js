@@ -22,10 +22,6 @@ function init(stateRef, client) {
   state.on('mesh.jamming_detected', (event) => {
     enqueue({ ...event, event_type: 'jamming_detected' });
   });
-  state.on('protocol.anomaly_detected', (event) => {
-    enqueue({ ...event, event_type: 'anomaly' });
-  });
-
   log.info('Tactical loop initialized');
 }
 

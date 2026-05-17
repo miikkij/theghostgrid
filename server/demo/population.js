@@ -267,4 +267,17 @@ function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
 }
 
-module.exports = { init, spawn };
+function respawn() {
+  _spawned = [];
+  _squads = {};
+  _cycleCounter = 0;
+  _settings.movementEnabled = false;
+  _settings.txEnabled = false;
+  state.set('population_settings', { ..._settings });
+  const count = config.demo.num_simulated_soldiers;
+  if (count > 0) {
+    spawn(count);
+  }
+}
+
+module.exports = { init, spawn, respawn };

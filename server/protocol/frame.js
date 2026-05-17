@@ -132,13 +132,7 @@ function decodeTransmissionFrame(buffer, key) {
 
 module.exports = {
   TRANSMISSION_FRAME_SIZE,
-  HEADER_SIZE,
   MAX_MESH_PAYLOAD,
-  PLAINTEXT_SIZE,
-  FRAME_TYPES,
-  FRAME_TYPE_NAMES,
-  nodeIdToUint16,
-  padPayload,
   encodeTransmissionFrame,
   decodeTransmissionFrame,
 };

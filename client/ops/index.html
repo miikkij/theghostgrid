@@ -47,6 +47,9 @@
         <button class="btn btn-danger" data-trigger="trigger_honeypot">
           <span><i class="ico">◎</i>Trigger Honeypot</span><span class="kbd">H</span>
         </button>
+        <button class="btn btn-danger" data-trigger="destroy_node">
+          <span><i class="ico">✕</i>Destroy Node</span>
+        </button>
       </div>
 
       <div class="control-group">
@@ -63,6 +66,9 @@
         <button class="btn btn-warn" data-trigger="pattern_radial">
           <span><i class="ico">◌</i>Radial Expansion</span>
         </button>
+        <button class="btn btn-warn" data-trigger="pattern_cluster">
+          <span><i class="ico">◎</i>Random Walk</span>
+        </button>
       </div>
 
       <div class="control-group">
@@ -73,6 +79,15 @@
         <button class="btn btn-info" data-trigger="request_sitrep">
           <span><i class="ico">📋</i>Request SITREP</span>
         </button>
+        <div class="roe-control">
+          <label class="roe-label">ROE</label>
+          <select id="roe-select" class="roe-select">
+            <option value="PEACETIME">PEACETIME</option>
+            <option value="DEFENSIVE">DEFENSIVE</option>
+            <option value="ACTIVE" selected>ACTIVE</option>
+            <option value="EMERGENCY">EMERGENCY</option>
+          </select>
+        </div>
       </div>
 
       <div class="control-group">
@@ -121,6 +136,7 @@
           <button class="tab-btn active" data-tab="events">EVENT LOG <span class="help-btn" data-help="event_log">?</span></button>
           <button class="tab-btn" data-tab="units">UNITS <span class="help-btn" data-help="units">?</span></button>
           <button class="tab-btn" data-tab="sim">SIMULATION <span class="help-btn" data-help="simulation">?</span></button>
+          <button class="tab-btn" data-tab="routing">ROUTING <span class="help-btn" data-help="routing">?</span></button>
         </div>
         <div class="tab-content active" id="tab-events">
           <div class="event-log-content"></div>
@@ -155,6 +171,10 @@
               <span id="sim-count">0</span> virtual soldiers
             </div>
           </div>
+        </div>
+        <div class="tab-content" id="tab-routing">
+          <div id="routing-node-list" style="max-height:80px;overflow-y:auto;border-bottom:1px solid #333;padding:4px;font-size:10px;color:#888;">Loading nodes...</div>
+          <div id="routing-table-content" style="padding:4px;font-size:10px;font-family:'JetBrains Mono',monospace;color:#666;">Select a node above to inspect its routing table.</div>
         </div>
       </div>
     </section>

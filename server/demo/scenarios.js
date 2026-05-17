@@ -3,6 +3,7 @@
 const log = require('../log').child({ component: 'scenarios' });
 const deception = require('../deception');
 const mesh = require('../protocol/mesh');
+const population = require('./population');
 const config = require('../config');
 
 let _state = null;
@@ -19,6 +20,10 @@ function init(state, cycleTicker) {
     const { scenario, parameters } = data;
     log.info({ scenario, parameters }, 'scenario received');
     dispatch(scenario, parameters || {});
+  });
+
+  state.on('ops.set_roe', (data) => {
+    dispatch('set_roe', data);
   });
 
   log.info('scenario dispatcher initialized');
@@ -202,30 +207,56 @@ const HANDLERS = {
   },
 
   reset_state() {
+    const meshModule = require('../protocol/mesh');
+    const roe = require('../hq_brain/roe');
+
+    // Stop pitch if running
+    _state.emit('ops.trigger_scenario', { scenario: 'stop_pitch' });
+
     // Clear jamming
     _state.set('jamming_zones', []);
 
-    // Reset node states (keep nodes but set to LISTENING)
+    // Remove all decoys, honeypots, and reset deception engine
+    _state.emit('ops.reset');
+
+    // Remove decoy/honeypot nodes from state
     const nodes = _state.get('nodes') || {};
     for (const [id, n] of Object.entries(nodes)) {
-      if (n.type === 'soldier') {
-        _state.set(`nodes.${id}.state`, 'LISTENING');
+      if (n.type === 'decoy' || n.type === 'honeypot') {
+        delete nodes[id];
+      } else if (n.type === 'soldier') {
+        n.state = 'LISTENING';
       }
     }
+    _state.set('nodes', nodes);
 
-    // Clear active patterns
-    const patterns = deception.getActivePatterns();
-    for (const p of patterns) {
-      deception.deactivatePattern(p.id);
-    }
+    // Reset mesh routing (neighbor tables, routing tables, seen cache)
+    meshModule.reset();
 
-    // Reset drones
+    // Reset ROE to default
+    roe.setState('ACTIVE');
+    _state.set('roe_state', 'ACTIVE');
+    _state.broadcast('roe_state_changed', { state: 'ACTIVE' });
+
+    // Reset drones to clean formation
     seedDrones();
 
+    // Reset stats
     _state.set('stats.packets_total', 0);
     _state.set('stats.packets_dropped', 0);
+    _state.set('stats.ai_decisions', 0);
+    _state.set('audit_log', []);
+    _state.set('active_patterns', []);
+    _state.set('cycle.number', 0);
+    _state.set('recent_events', []);
 
-    log.info('state reset');
+    // Re-spawn virtual soldiers and recompute mesh
+    population.respawn();
+
+    // Tell all clients to reset their state
+    _state.broadcast('full_reset', {});
+
+    log.info('full state reset — clean session');
   },
 
   request_sitrep() {
@@ -270,6 +301,33 @@ const HANDLERS = {
   pattern_linear(params)  { HANDLERS.activate_pattern({ patternName: 'linear_translation', parameters: params }); },
   pattern_convoy(params)  { HANDLERS.activate_pattern({ patternName: 'phantom_convoy', parameters: params }); },
   pattern_radial(params)  { HANDLERS.activate_pattern({ patternName: 'radial_expansion', parameters: params }); },
+  pattern_cluster(params) { HANDLERS.activate_pattern({ patternName: 'random_walk_cluster', parameters: params }); },
+
+  set_roe(params) {
+    const roe = require('../hq_brain/roe');
+    const newState = params.state || 'ACTIVE';
+    const changed = roe.setState(newState);
+    if (changed) {
+      _state.set('roe_state', newState);
+      _state.broadcast('roe_state_changed', { state: newState });
+      log.info({ roe: newState }, 'ROE state changed');
+    }
+  },
+
+  destroy_node(params) {
+    const nodeId = params.nodeId;
+    if (!nodeId) {
+      log.warn('destroy_node: no nodeId provided');
+      return;
+    }
+    const decoySimulator = require('../deception/decoy_simulator');
+    const decoyStates = decoySimulator.getStates();
+    if (decoyStates[nodeId]) {
+      decoySimulator.destroyNode(nodeId);
+    }
+    _state.set(`nodes.${nodeId}.state`, 'DEAD');
+    log.info({ nodeId }, 'node destroyed');
+  },
 };
 
 function seedDrones() {

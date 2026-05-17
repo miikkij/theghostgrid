@@ -114,12 +114,39 @@ var Controls = (function () {
       });
     },
 
+    pattern_cluster: function () {
+      if (activePatterns.has('pattern_cluster')) {
+        socket.emit('ops.trigger_scenario', {
+          scenario: 'deactivate_pattern',
+          parameters: { patternName: 'random_walk_cluster' },
+        });
+        return;
+      }
+      socket.emit('ops.trigger_scenario', {
+        scenario: 'pattern_cluster',
+        parameters: {
+          seed: Math.floor(Math.random() * 99999),
+          cluster_radius: 0.1,
+          velocity: 0.008,
+          initial_position: { x: 0.4, y: 0.5 },
+        },
+      });
+    },
+
     trigger_ai_adaptation: function () {
       socket.emit('ops.trigger_scenario', { scenario: 'trigger_ai_adaptation', parameters: {} });
     },
 
     request_sitrep: function () {
       socket.emit('ops.trigger_scenario', { scenario: 'request_sitrep', parameters: {} });
+    },
+
+    destroy_node: function () {
+      var nodes = window._lastNodes || {};
+      var alive = Object.keys(nodes).filter(function (id) { return nodes[id].state !== 'DEAD' && nodes[id].type !== 'drone'; });
+      if (alive.length === 0) return;
+      var victim = alive[Math.floor(Math.random() * alive.length)];
+      socket.emit('ops.trigger_scenario', { scenario: 'destroy_node', parameters: { nodeId: victim } });
     },
 
     pause_cycles: function () {
@@ -245,6 +272,14 @@ var Controls = (function () {
       }
     });
 
+    // ROE dropdown
+    var roeSelect = document.getElementById('roe-select');
+    if (roeSelect) {
+      roeSelect.addEventListener('change', function () {
+        socket.emit('ops.set_roe', { state: roeSelect.value });
+      });
+    }
+
     // Cycle period selector
     var periodSelect = document.querySelector('[data-cycle-period]');
     if (periodSelect) {
@@ -279,7 +314,7 @@ var Controls = (function () {
     if (resume) resume.disabled = pitchState !== 'paused';
   }
 
-  var REQUIRES_DECOYS = ['pattern_linear', 'pattern_convoy', 'pattern_radial'];
+  var REQUIRES_DECOYS = ['pattern_linear', 'pattern_convoy', 'pattern_radial', 'pattern_cluster'];
 
   function setDecoysActive(active) {
     REQUIRES_DECOYS.forEach(function (name) {

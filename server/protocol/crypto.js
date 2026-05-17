@@ -77,11 +77,8 @@ function verifyMac(bytes, key, expectedMac) {
 }
 
 module.exports = {
-  SLOT_COUNT,
-  KEY_LENGTH,
   NONCE_LENGTH,
   TAG_LENGTH,
-  MAC_LENGTH,
   deriveCycleKey,
   deriveSlot,
   deriveHopSequence,

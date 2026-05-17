@@ -147,7 +147,6 @@ function reset() {
 
 module.exports = {
   VALID_EVENT_TYPES,
-  VALID_SENSORS,
   init,
   registerHoneypot,
   unregisterHoneypot,

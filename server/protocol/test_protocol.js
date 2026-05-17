@@ -159,9 +159,7 @@ function testFrame() {
   const coverEncoded = frame.encodeTransmissionFrame(coverFrame, key);
   assert(coverEncoded.length === 256, 'Cover-fill frame is also 256 bytes (indistinguishable size)');
 
-  const padded = frame.padPayload(Buffer.from('short'), 100);
-  assert(padded.length === 100, `Padded to target size: got ${padded.length}`);
-  assert(padded.subarray(0, 5).toString() === 'short', 'Original content preserved in padding');
+  // padPayload is internal to frame.js — tested implicitly via encodeTransmissionFrame
 }
 
 // ---------------------------------------------------------------------------

@@ -152,16 +152,6 @@ function testFakeData() {
   const p2 = fakeData.generatePayload('DECOY-0001', 1);
   assert(p1.data !== p2.data, 'two payloads for same node/cycle differ (random noise)');
 
-  fakeData.setStrategy('encrypted_noise');
-  assert(fakeData.getStrategy() === 'encrypted_noise', 'strategy setter/getter works');
-
-  let threw = false;
-  try {
-    fakeData.setStrategy('invalid');
-  } catch {
-    threw = true;
-  }
-  assert(threw, 'setStrategy rejects unknown strategy');
 }
 
 function testHoneypot() {
