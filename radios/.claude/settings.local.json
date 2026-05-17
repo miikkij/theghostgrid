@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl:*)",
+      "Bash(source:*)",
+      "Bash(sudo apt-get:*)"
+    ]
+  }
+}

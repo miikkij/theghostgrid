@@ -2,10 +2,15 @@ use anyhow::{Context, Result};
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine;
 use rand::Rng;
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
 use crate::events::{emit_event, now_ms, Event};
 use crate::hopping;
+
+#[cfg(feature = "real-radio")]
+use wfb_rs::{
+    WfbRx, WfbRxConfig, WfbTx, WfbTxConfig, WFB_FRAME_TYPE_DATA, compute_max_payload,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Role {
@@ -22,7 +27,6 @@ impl std::fmt::Display for Role {
     }
 }
 
-#[allow(dead_code)]
 pub struct ReceivedFrame {
     pub payload: Vec<u8>,
     pub timestamp_ms: u64,
@@ -30,19 +34,21 @@ pub struct ReceivedFrame {
     pub source: String,
 }
 
+const STREAM_ID: u32 = 1;
+
 pub struct Adapter {
     pub iface: String,
     pub role: Role,
     pub current_channel: u8,
     simulate: bool,
-    // TODO: When kova-wfb-rs is available, store the real handles here:
-    // tx: Option<wfb_rs::WfbTx>,
-    // rx: Option<wfb_rs::WfbRx>,
+    tx_seq: u32,
+    #[cfg(feature = "real-radio")]
+    tx: Option<WfbTx>,
+    #[cfg(feature = "real-radio")]
+    rx: Option<WfbRx>,
 }
 
 impl Adapter {
-    /// Open an adapter. In simulate mode, no hardware is touched.
-    /// In real mode, this is where kova-wfb-rs WfbTx/WfbRx would be initialized.
     pub fn open(iface: &str, role: Role, simulate: bool) -> Result<Self> {
         if simulate {
             debug!(iface, %role, "opening simulated adapter");
@@ -56,28 +62,60 @@ impl Adapter {
                 role,
                 current_channel: hopping::default_channels()[0],
                 simulate: true,
+                tx_seq: 0,
+                #[cfg(feature = "real-radio")]
+                tx: None,
+                #[cfg(feature = "real-radio")]
+                rx: None,
             });
         }
 
-        // TODO: Real adapter initialization using kova-wfb-rs:
-        //
-        //   let tx_config = wfb_rs::WfbTxConfig { ... };
-        //   let rx_config = wfb_rs::WfbRxConfig { ... };
-        //   let tx = wfb_rs::WfbTx::new(iface, tx_config)
-        //       .context("failed to open TX on {iface}")?;
-        //   let rx = wfb_rs::WfbRx::new(iface, rx_config)
-        //       .context("failed to open RX on {iface}")?;
-        //
-        // The adapter expects the interface to already be in monitor mode
-        // (set up via `airmon-ng start <iface>` before launching this process).
+        #[cfg(feature = "real-radio")]
+        {
+            info!(iface, %role, "opening real adapter via kova-wfb-rs");
 
+            let tx = WfbTx::open(&WfbTxConfig {
+                iface: iface.to_string(),
+                stream_id: STREAM_ID,
+                frame_type: WFB_FRAME_TYPE_DATA,
+                mcs_index: 1,
+                bandwidth: 20,
+            })
+            .context(format!("WfbTx::open failed on {iface}"))?;
+
+            let rx = WfbRx::open(&WfbRxConfig {
+                iface: iface.to_string(),
+                stream_id: STREAM_ID,
+                rcv_buf_size: None,
+                ignore_self_injected: true,
+                ring_size: 32,
+            })
+            .context(format!("WfbRx::open failed on {iface}"))?;
+
+            emit_event(&Event::AdapterStatus {
+                iface: iface.to_string(),
+                status: "ok_real".into(),
+                channel: Some(hopping::default_channels()[0]),
+            });
+
+            return Ok(Self {
+                iface: iface.to_string(),
+                role,
+                current_channel: hopping::default_channels()[0],
+                simulate: false,
+                tx_seq: 0,
+                tx: Some(tx),
+                rx: Some(rx),
+            });
+        }
+
+        #[cfg(not(feature = "real-radio"))]
         anyhow::bail!(
-            "real adapter mode requires kova-wfb-rs (not yet linked); \
-             use --simulate for development"
+            "real adapter mode requires feature 'real-radio'; \
+             build with: cargo build --features real-radio"
         )
     }
 
-    /// Switch the adapter to a different WiFi channel.
     pub async fn set_channel(&mut self, channel: u8) -> Result<()> {
         if self.simulate {
             debug!(iface = %self.iface, channel, "simulated channel switch");
@@ -90,15 +128,24 @@ impl Adapter {
             return Ok(());
         }
 
-        // TODO: Real channel switch using kova-wfb-rs or iw/iwconfig:
-        //   Command::new("iw").args(["dev", &self.iface, "set", "channel", &channel.to_string()])
-        //       .status()?;
-        // Or if kova-wfb-rs exposes a set_channel method, use that instead.
+        let status = std::process::Command::new("iw")
+            .args(["dev", &self.iface, "set", "channel", &channel.to_string()])
+            .status()
+            .context(format!("iw set channel failed on {}", self.iface))?;
 
-        anyhow::bail!("real channel switch not implemented")
+        if !status.success() {
+            anyhow::bail!("iw set channel {} failed on {}", channel, self.iface);
+        }
+
+        self.current_channel = channel;
+        emit_event(&Event::ChannelChanged {
+            iface: self.iface.clone(),
+            ts: now_ms(),
+            channel,
+        });
+        Ok(())
     }
 
-    /// Inject a packet on this adapter.
     pub async fn transmit(&mut self, payload: &[u8]) -> Result<usize> {
         let bytes = payload.len();
 
@@ -113,36 +160,89 @@ impl Adapter {
             return Ok(bytes);
         }
 
-        // TODO: Real packet injection using kova-wfb-rs:
-        //   self.tx.as_mut().unwrap().send(payload)
-        //       .context("transmit failed on {}")?;
+        #[cfg(feature = "real-radio")]
+        {
+            self.tx
+                .as_mut()
+                .expect("tx handle missing on real adapter")
+                .send(payload, self.tx_seq)
+                .context("transmit failed")?;
+            self.tx_seq = self.tx_seq.wrapping_add(1);
 
-        anyhow::bail!("real transmit not implemented")
+            emit_event(&Event::FrameTransmitted {
+                iface: self.iface.clone(),
+                ts: now_ms(),
+                bytes,
+                channel: self.current_channel,
+            });
+            return Ok(bytes);
+        }
+
+        #[cfg(not(feature = "real-radio"))]
+        anyhow::bail!("real transmit requires feature 'real-radio'")
     }
 
-    /// Non-blocking receive. Returns None if no frame is available.
-    #[allow(dead_code)]
     pub async fn receive(&mut self) -> Result<Option<ReceivedFrame>> {
         if self.simulate {
             return Ok(None);
         }
 
-        // TODO: Real receive using kova-wfb-rs:
-        //   match self.rx.as_mut().unwrap().recv_optional(timeout) {
-        //       Ok(Some((payload, meta))) => Ok(Some(ReceivedFrame {
-        //           payload,
-        //           timestamp_ms: now_ms(),
-        //           channel: self.current_channel,
-        //           source: format_source_from_header(&meta),
-        //       })),
-        //       Ok(None) => Ok(None),
-        //       Err(e) => Err(e.into()),
-        //   }
+        #[cfg(feature = "real-radio")]
+        {
+            let max_payload = compute_max_payload();
+            let mut buf = vec![0u8; max_payload];
+            match self
+                .rx
+                .as_mut()
+                .expect("rx handle missing on real adapter")
+                .recv(&mut buf, std::time::Duration::from_millis(1))
+            {
+                Ok(Some((n, meta))) => Ok(Some(ReceivedFrame {
+                    payload: buf[..n].to_vec(),
+                    timestamp_ms: now_ms(),
+                    channel: self.current_channel,
+                    source: format!("ant{}:rssi{}", meta.antenna[0], meta.rssi[0]),
+                })),
+                Ok(None) => Ok(None),
+                Err(e) => Err(e.into()),
+            }
+        }
 
-        anyhow::bail!("real receive not implemented")
+        #[cfg(not(feature = "real-radio"))]
+        anyhow::bail!("real receive requires feature 'real-radio'")
     }
 
-    /// Generate a simulated received frame (used in simulate mode's background loop).
+    pub async fn emit_cover_signal(&mut self, duration_ms: u64) -> Result<()> {
+        if self.role != Role::Drone {
+            warn!(iface = %self.iface, "cover signal requested on non-drone adapter");
+        }
+
+        if self.simulate {
+            debug!(iface = %self.iface, duration_ms, "simulated cover signal");
+            tokio::time::sleep(std::time::Duration::from_millis(duration_ms.min(300))).await;
+            return Ok(());
+        }
+
+        #[cfg(feature = "real-radio")]
+        {
+            let channels = [1u8, 6, 11];
+            let mut noise = vec![0u8; 256];
+            let deadline =
+                std::time::Instant::now() + std::time::Duration::from_millis(duration_ms);
+            while std::time::Instant::now() < deadline {
+                rand::thread_rng().fill(&mut noise[..]);
+                for &ch in &channels {
+                    self.set_channel(ch).await?;
+                    self.transmit(&noise).await?;
+                }
+            }
+            return Ok(());
+        }
+
+        #[cfg(not(feature = "real-radio"))]
+        anyhow::bail!("real cover signal requires feature 'real-radio'")
+    }
+
     #[allow(dead_code)]
     pub fn generate_simulated_frame(&self) -> ReceivedFrame {
         let mut rng = rand::thread_rng();
@@ -159,29 +259,6 @@ impl Adapter {
         }
     }
 
-    /// Emit a cover signal for the specified duration (drone role only).
-    pub async fn emit_cover_signal(&mut self, duration_ms: u64) -> Result<()> {
-        if self.role != Role::Drone {
-            warn!(iface = %self.iface, "cover signal requested on non-drone adapter");
-        }
-
-        if self.simulate {
-            debug!(iface = %self.iface, duration_ms, "simulated cover signal");
-            // Simulate the timing of a cover signal
-            tokio::time::sleep(std::time::Duration::from_millis(duration_ms.min(300))).await;
-            return Ok(());
-        }
-
-        // TODO: Real cover signal using kova-wfb-rs:
-        //   Generate pseudorandom wideband data and inject continuously
-        //   for `duration_ms` milliseconds. The cover signal should occupy
-        //   the full band (channels 1, 6, 11 in rapid succession) to mask
-        //   ground burst transmissions.
-
-        anyhow::bail!("real cover signal not implemented")
-    }
-
-    /// Report the adapter as degraded (e.g., after a disconnect).
     #[allow(dead_code)]
     pub fn mark_degraded(&self, reason: &str) {
         emit_event(&Event::Warning {
@@ -195,12 +272,10 @@ impl Adapter {
     }
 }
 
-/// Encode raw bytes as base64 for the JSON-lines protocol.
 pub fn encode_payload(payload: &[u8]) -> String {
     B64.encode(payload)
 }
 
-/// Decode base64 payload from the JSON-lines protocol.
 pub fn decode_payload(b64: &str) -> Result<Vec<u8>> {
     B64.decode(b64).context("invalid base64 payload")
 }
@@ -218,7 +293,7 @@ mod tests {
     }
 
     #[test]
-    fn real_adapter_fails_without_library() {
+    fn real_adapter_fails_without_feature() {
         let result = Adapter::open("wlan1", Role::Ground, false);
         assert!(result.is_err());
     }

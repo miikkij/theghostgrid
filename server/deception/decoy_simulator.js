@@ -2,6 +2,7 @@
 
 const crypto = require('node:crypto');
 const cryptoUtils = require('../protocol/crypto');
+const mesh = require('../protocol/mesh');
 const wavePatterns = require('./wave_patterns');
 const fakeData = require('./fake_data');
 const honeypot = require('./honeypot');
@@ -99,6 +100,9 @@ function spawnDecoys(count, area) {
 
     ids.push(nodeId);
   }
+
+  // Wire decoys into the mesh neighbor graph
+  mesh.computeNeighborsFromState();
 
   return ids;
 }

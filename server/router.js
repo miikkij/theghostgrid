@@ -194,6 +194,14 @@ function initRouter() {
     broadcastEvent('honeypot', 'Honeypot ' + (data.honeypotId || '') + ' triggered: ' + (data.eventType || data.type || 'contact'));
   });
 
+  // Forward mesh packet delivery to ops and screen
+  state.on('mesh.packet_delivered', (data) => {
+    if (data.via === 'fiber') {
+      broadcastEvent('mesh', 'Packet delivered to HQ via fiber (src: ' + (data.src || '?') + ')');
+      state.broadcastTo('screen', 'mesh_delivered_hq', data);
+    }
+  });
+
   // Forward mesh events as ops log entries
   state.on('mesh.routing_converged', (data) => {
     broadcastEvent('routing', 'Mesh routing converged (cycle ' + (state.get('cycle.number') || 0) + ', ' + (data.reason || 'update') + ')');

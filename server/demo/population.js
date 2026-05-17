@@ -4,6 +4,7 @@ const { state } = require('../state');
 const config = require('../config');
 const log = require('../log').child({ component: 'population' });
 const meshViz = require('../mesh_visualizer');
+const mesh = require('../protocol/mesh');
 
 const NATO = [
   'ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT',
@@ -95,6 +96,9 @@ function spawn(count) {
     _spawned.push(callsign);
     _squads[squadId].members.push(callsign);
   }
+
+  // Seed mesh neighbor relationships from spawned positions
+  mesh.computeNeighborsFromState();
 
   log.info({ count: _spawned.length, squads: numSquads }, 'virtual soldiers spawned');
 }
@@ -235,6 +239,12 @@ function onBurst() {
 
 function onCycleTick() {
   _cycleCounter++;
+
+  // Prune out-of-range mesh links every 10 cycles when movement is active
+  if (_settings.movementEnabled && _cycleCounter % 10 === 0) {
+    mesh.pruneMovedNeighbors();
+  }
+
   if (!_settings.jammingEnabled) return;
   if (_spawned.length < 4 || _cycleCounter % _settings.jammingInterval !== 0) return;
 

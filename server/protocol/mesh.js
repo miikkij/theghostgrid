@@ -25,10 +25,62 @@ function init(state, config) {
 
   _state.on('transmission.frame_received', (frameData) => {
     const sourceNode = frameData.source_node;
+    if (!sourceNode) return;
+
+    const nodes = _state.get('nodes') || {};
+    const drones = _state.get('drones') || {};
+    const srcNode = nodes[sourceNode];
+    const srcDrone = drones[sourceNode];
+    const srcPos = srcNode?.position || srcDrone?.position;
+    if (!srcPos) return;
+
+    // Only process routing for non-cover frames to limit CPU
+    const meshPayload = frameData.mesh;
+    const isRoutable = meshPayload && meshPayload.dst && meshPayload.class !== 'cover';
+
     for (const [nodeId] of _neighbors) {
       if (nodeId === sourceNode) continue;
-      if (_neighbors.get(nodeId).has(sourceNode)) {
-        handleReceivedFrame(nodeId, frameData);
+      const table = _neighbors.get(nodeId);
+
+      if (table.has(sourceNode)) {
+        // Update last-seen timestamp for existing neighbor
+        table.get(sourceNode).lastSeen = _currentCycle;
+        if (isRoutable) handleReceivedFrame(nodeId, frameData);
+      } else {
+        // Discover new neighbor via range check
+        const nNode = nodes[nodeId];
+        const nDrone = drones[nodeId];
+        const nPos = nNode?.position || nDrone?.position;
+        if (nPos) {
+          const dx = srcPos.x - nPos.x;
+          const dy = srcPos.y - nPos.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist <= _config.RADIO_RANGE) {
+            const quality = 1.0 - (dist / _config.RADIO_RANGE);
+            updateNeighbor(nodeId, sourceNode, quality, _currentCycle);
+            if (isRoutable) handleReceivedFrame(nodeId, frameData);
+          }
+        }
+      }
+    }
+
+    // Bootstrap: nodes not yet tracked in _neighbors
+    const allIds = [...Object.keys(nodes), ...Object.keys(drones)];
+    for (const nodeId of allIds) {
+      if (nodeId === sourceNode) continue;
+      if (_neighbors.has(nodeId)) continue;
+      const nNode = nodes[nodeId];
+      const nDrone = drones[nodeId];
+      if (nNode?.state === 'DEAD' || nDrone?.status === 'destroyed') continue;
+      const nPos = nNode?.position || nDrone?.position;
+      if (!nPos) continue;
+      const dx = srcPos.x - nPos.x;
+      const dy = srcPos.y - nPos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= _config.RADIO_RANGE) {
+        const quality = 1.0 - (dist / _config.RADIO_RANGE);
+        updateNeighbor(nodeId, sourceNode, quality, _currentCycle);
+        if (isRoutable) handleReceivedFrame(nodeId, frameData);
       }
     }
   });
@@ -39,6 +91,11 @@ function init(state, config) {
 
     if (data.number % _config.DV_ANNOUNCE_INTERVAL === 0) {
       broadcastRoutingUpdates();
+    }
+
+    // Discover new neighbor links from positions every 5 cycles
+    if (data.number % 5 === 0) {
+      computeNeighborsFromState();
     }
   });
 }
@@ -73,7 +130,10 @@ function updateNeighbor(nodeId, neighborId, signalQuality, lastSeen) {
 function resolveNodeRole(nodeId) {
   if (!_state) return 'ground';
   const nodes = _state.get('nodes') || {};
-  return nodes[nodeId]?.type || 'ground';
+  if (nodes[nodeId]?.type) return nodes[nodeId].type;
+  const drones = _state.get('drones') || {};
+  if (drones[nodeId]) return 'drone';
+  return 'ground';
 }
 
 function removeNeighbor(nodeId, neighborId) {
@@ -296,12 +356,15 @@ function updateRoutingTable(nodeId) {
   }
 
   const drone = neighbors.find((n) => n.role === 'drone');
-  if (drone && !table.has(_config.HQ_NODE_ID)) {
-    table.set(_config.HQ_NODE_ID, {
-      nextHop: drone.nodeId,
-      hopCount: 2,
-      quality: drone.signalQuality,
-    });
+  if (drone) {
+    const existing = table.get(_config.HQ_NODE_ID);
+    if (!existing || existing.hopCount > 2) {
+      table.set(_config.HQ_NODE_ID, {
+        nextHop: drone.nodeId,
+        hopCount: 2,
+        quality: drone.signalQuality,
+      });
+    }
   }
 
   _routingTables.set(nodeId, table);
@@ -337,6 +400,71 @@ function broadcastRoutingUpdates() {
   }
 }
 
+function computeNeighborsFromState() {
+  if (!_state) return;
+  const nodes = _state.get('nodes') || {};
+  const drones = _state.get('drones') || {};
+  const range = _config.RADIO_RANGE;
+
+  const all = {};
+  for (const [id, n] of Object.entries(nodes)) {
+    if (!n.position || n.state === 'DEAD') continue;
+    all[id] = { position: n.position, type: n.type || 'ground' };
+  }
+  for (const [id, d] of Object.entries(drones)) {
+    if (!d.position || d.status === 'destroyed') continue;
+    all[id] = { position: d.position, type: 'drone' };
+  }
+
+  const ids = Object.keys(all);
+  for (let i = 0; i < ids.length; i++) {
+    const a = ids[i];
+    const posA = all[a].position;
+    for (let j = i + 1; j < ids.length; j++) {
+      const b = ids[j];
+      const posB = all[b].position;
+      const dx = posA.x - posB.x;
+      const dy = posA.y - posB.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= range) {
+        const quality = 1.0 - (dist / range);
+        updateNeighbor(a, b, quality, _currentCycle);
+      }
+    }
+  }
+}
+
+function pruneMovedNeighbors() {
+  if (!_state) return;
+  const nodes = _state.get('nodes') || {};
+  const drones = _state.get('drones') || {};
+  const range = _config.RADIO_RANGE;
+
+  function getPos(id) {
+    if (nodes[id] && nodes[id].position) return nodes[id].position;
+    if (drones[id] && drones[id].position) return drones[id].position;
+    return null;
+  }
+
+  for (const [nodeId, table] of _neighbors) {
+    const posA = getPos(nodeId);
+    if (!posA) continue;
+    const stale = [];
+    for (const [neighborId] of table) {
+      const posB = getPos(neighborId);
+      if (!posB) { stale.push(neighborId); continue; }
+      const dx = posA.x - posB.x;
+      const dy = posA.y - posB.y;
+      if (Math.sqrt(dx * dx + dy * dy) > range) {
+        stale.push(neighborId);
+      }
+    }
+    for (const id of stale) {
+      removeNeighbor(nodeId, id);
+    }
+  }
+}
+
 function reset() {
   _neighbors.clear();
   _routingTables.clear();
@@ -353,5 +481,7 @@ module.exports = {
   handleReceivedFrame,
   declareJammed,
   getRoutingTable,
+  computeNeighborsFromState,
+  pruneMovedNeighbors,
   reset,
 };

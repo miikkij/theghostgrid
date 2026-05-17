@@ -5,6 +5,8 @@ const path = require('path');
 const readline = require('readline');
 const { state } = require('./state');
 const config = require('./config');
+const frame = require('./protocol/frame');
+const cryptoUtils = require('./protocol/crypto');
 const log = require('./log').child({ component: 'radio_bridge' });
 
 let radioProcess = null;
@@ -22,20 +24,18 @@ function init() {
   }
 
   const args = [
-    '--simulate',
-    '--drone-iface', config.radio.drone_iface,
-    '--ground1-iface', config.radio.ground_1_iface,
-    '--ground2-iface', config.radio.ground_2_iface,
+    '--drone', config.radio.drone_iface,
+    '--ground1', config.radio.ground_1_iface,
+    '--ground2', config.radio.ground_2_iface,
   ];
 
-  log.info({ binary: binaryPath, args }, 'spawning radio bridge');
+  log.info({ binary: binaryPath, args }, 'spawning radio bridge (real mode)');
 
   radioProcess = spawn(binaryPath, args, {
     stdio: ['pipe', 'pipe', 'pipe'],
     cwd: path.join(__dirname, '..', 'radios'),
   });
 
-  // Parse JSON-lines from stdout
   const rl = readline.createInterface({ input: radioProcess.stdout });
   rl.on('line', (line) => {
     try {
@@ -46,7 +46,6 @@ function init() {
     }
   });
 
-  // Log stderr
   radioProcess.stderr.on('data', (data) => {
     const msg = data.toString().trim();
     if (msg) log.debug({ radio: msg }, 'radio stderr');
@@ -62,21 +61,52 @@ function init() {
     radioProcess = null;
   });
 
-  // Forward transmission commands from state bus to radio stdin
-  state.on('transmission.frame_to_send', (frame) => {
-    sendCommand({ type: 'transmit_frame', payload: frame });
+  // Outbound: encode frame to 256-byte binary, base64, send to Rust bridge
+  state.on('transmission.frame_to_send', (frameObj) => {
+    const cycleKey = cryptoUtils.deriveCycleKey(
+      config.protocol.master_secret,
+      frameObj.cycle || 0,
+    );
+    const encoded = frame.encodeTransmissionFrame(frameObj, cycleKey);
+    const payload_b64 = encoded.toString('base64');
+
+    const iface = frameObj._iface || config.radio.ground_1_iface;
+    const slotInfo = frameObj.slot || 0;
+    const hops = frameObj._frequencyHops || [1, 6, 11];
+
+    sendCommand({
+      type: 'start_burst',
+      cycle: frameObj.cycle || 0,
+      slot_assignments: [{
+        iface,
+        slot_index: slotInfo,
+        frequency_hops: hops,
+        payload_b64,
+      }],
+    });
   });
 
   state.on('cycle.sync_beta_burst', (data) => {
-    sendCommand({ type: 'emit_cover_signal', cycle: data.number });
+    sendCommand({ type: 'emit_cover_signal', duration_ms: config.cycle.burst_window_ms });
   });
 }
 
 function handleRadioEvent(event) {
   switch (event.type) {
-    case 'frame_received':
-      state.emit('radio.frame_received', event);
+    case 'frame_received': {
+      // Decode base64 payload to 256-byte Buffer for binary frame decryption
+      if (event.payload_b64) {
+        const raw = Buffer.from(event.payload_b64, 'base64');
+        state.emit('radio.frame_received', {
+          raw,
+          iface: event.iface,
+          src: event.src,
+          channel: event.channel,
+          ts: event.ts,
+        });
+      }
       break;
+    }
     case 'frame_transmitted':
       state.emit('transmission.frame_transmitted', event);
       break;
@@ -127,4 +157,4 @@ function findBinary() {
   return null;
 }
 
-module.exports = { init, shutdown };
+module.exports = { init, handleRadioEvent, shutdown };
