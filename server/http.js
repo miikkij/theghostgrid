@@ -61,7 +61,13 @@ function createApp() {
   });
 
   app.get('/docs', (_req, res) => {
-    const files = fs.readdirSync(docsDir).filter(f => f.endsWith('.md')).sort();
+    const hidden = new Set([
+      'full-system-audit.md',
+      'implementation-plan.md',
+      'integration-issues.md',
+      'COMPLIANCE-REPORT.md',
+    ]);
+    const files = fs.readdirSync(docsDir).filter(f => f.endsWith('.md') && !hidden.has(f)).sort();
     const list = files.map(f => {
       const label = f.replace('.md', '').replace(/^\d+-/, '').replace(/-/g, ' ');
       return `- [${label}](/docs/${f})`;
